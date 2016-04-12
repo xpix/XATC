@@ -1,4 +1,4 @@
-﻿Solution for an automatic toolchange XTC
+Solution for an automatic toolchange XTC
 ===============================================
 
 # spindle get tool
@@ -102,4 +102,3 @@ Use an macro, that only connect to XTC Console and send all commands after XTC[1
    * http://lab.whitequark.org/notes/2014-06-15/cnc3020t-coolant-pump-and-ccw-rotation/ 
    * http://playwithrobots.com/dc-motor-driver-circuits/
    * http://www.ebay.de/itm/12-24V-180W-High-power-DC-Motor-Driver-Speed-reversing-current-PID-controller-/222009628227
-   
