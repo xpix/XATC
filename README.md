@@ -22,6 +22,12 @@ Solution for an automatic toolchange XTC
 - work table has 7.5mm slots every 30 mm
 - bolts are M6
 
+# tourque
+- We need 7-9kg (15-25 FT-LBS) Torque to tighten an ER11 Collet: https://www.maritool.com/faq/collet-questions#27
+- My 400W Spindle has a maximum Torque of 0.53 Newton meter, calculated 5.4kg http://gowww.m.convert-units.info/torque/newton-meter/0.53
+- This is close to the minimum torque of 7kg and enough for cut/mill/drill a PCB.
+
+
 # Software
 - wrote a serial command program to stop/start/breake a Motor
 - can include as a normal serial device to SPJS
