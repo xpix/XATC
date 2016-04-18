@@ -104,13 +104,13 @@ var myXTCMacro = {
 			var index = parseInt(RegExp.$1); 
 			// our id is always 1 ahead of the gcode.lines array index, i.e.
 			// line 1 in the widget is this.gcode.lines[0]
-         // Ignore empty lines
+            // Ignore empty lines
 			if(this.gcode === undefined)
 			   return;
 
 			var gcodeline = this.gcode.lines[index - 1];
 
-         // Ignore empty lines
+            // Ignore empty lines
 			if(gcodeline === undefined)
 			   return;
 			
@@ -126,7 +126,7 @@ var myXTCMacro = {
 			}
 		}
 	},
-   onJsonSend: function(data){
+    onJsonSend: function(data){
       // test to M6 and try to find the toolnumber
       console.log('ATC data', data);
 
@@ -150,7 +150,7 @@ var myXTCMacro = {
    // decide to get a new or put first the old tool on holder 
    onATC: function(data){
       console.log('ATC Execute Line:', data, data.line);
-
+      var waitToUnPause = 0;
       // now the machine is in pause mode
       // cuz M6 linenumber are the same as actual linenumber
       // and we can do whatever we like :)
@@ -160,15 +160,22 @@ var myXTCMacro = {
          // check if a different tool in use
          if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
             this.atc_move_to_holder(this.toolinuse);     // move to holder ...
-            setTimeout(this.atc_loose.bind(this), 4000);  // put tool in holder
+            setTimeout(this.atc_loose.bind(this), 250);  // put tool in holder
+            waitToUnPause += 4000;
          }
          
          // get new tool from holder, if neccessary
          if(this.toolnumber > 0){
             this.atc_move_to_holder(this.toolnumber);    // move to holder ...
             // wait for stop state
-            setTimeout(this.atc_tight.bind(this), 4000);  // get tool from holder
+            setTimeout(this.atc_tight.bind(this), 250);  // get tool from holder
+            waitToUnPause += 4000;
          }
+         // wait for tighten process and move to a secure position and unpause this toolchange
+         var that = this;
+         setTimeout(function () {
+             that.unpauseGcode();
+         }, waitToUnPause);
       }
    },
    atc_move_to_holder: function( toolnumber ){
@@ -188,8 +195,13 @@ var myXTCMacro = {
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // now move spindle to the holder position
-      cmd = "G0 X" + holder.posX + " Y" + holder.posY + " Z" + atcparams.safetyHeight + "\n"; 
+      // first to safetyHeight ...
+      cmd += "G0 Z" + atcparams.safetyHeight + "\n";
+      // then to holder center ...
+      cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
+      // then to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
+      // slowly to the minus end ollet Z position  ...
       cmd += "G0 Z" + atcparams.nutZ + " F" + atcparams.feedRate + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
@@ -206,26 +218,18 @@ var myXTCMacro = {
       var holder = this.atcMillHolder[ (this.toolinuse-1)];
       
       // loose process
-      var cmd = "send " + this.serialPortXTC + " " 
-                  + "bwd " + (holder.tourque+50) + " " + holder.time + "\n" // rotate backward and 
+      // rotate backward with more power(+50) as the tight process    
+      var cmd = "send " + this.serialPortXTC + " " + "bwd " + (holder.tourque+50) + " " + holder.time + "\n";  
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
-      setTimeout(function() { // and loose the collet some time later
+      // ... set the NEGATVE level, if the current go down ... i.e. under 3000mA ... the the collet are loose
+      setTimeout(function() { 
          var cmdwait = "send " + this.serialPortXTC + " " + "lev " + atcparams.revlevel + "\n"; 
          chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-      }, 50);
+      }, (holder.time/2)); // <-- half of holder.time
 
-      // set tool in use
+      // unset tool in use
       this.toolinuse = 0;
-
-      // wait for tighten process and move to a secure position and unpause this toolchange
-      var that = this;
-      setTimeout(function () {
-         cmd = "G0 Z" + atcparams.safetyHeight + "\n"; 
-         chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
-
-         setTimeout(function(){ that.unpauseGcode() }, 4000);
-       }, (holder.time*2));
    },
    atc_tight: function(){
       // wait on main cnccontroller's stop state (think asynchron!)
@@ -247,17 +251,12 @@ var myXTCMacro = {
 
       // set tool in use
       this.toolinuse = this.toolnumber;
-
-      // wait for tighten process and move to a secure position and unpause this toolchange
-      var that = this;
-      setTimeout(function () {
-         cmd = "G0 Z" + atcparams.safetyHeight + "\n"; 
-         chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
-
-         setTimeout(function(){ that.unpauseGcode() }, 4000);
-       }, (holder.time*2));
    },
    unpauseGcode: function() {
+      if(this.State != "Stop"){ // wait for stop state
+         setTimeout(this.unpauseGcode.bind(this), 500);
+         return;
+      }
       macro.status("Just unpaused gcode.");
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", "");
    },
