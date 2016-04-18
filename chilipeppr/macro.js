@@ -133,11 +133,10 @@ var myXTCMacro = {
       if($.type(data) === 'array'){
          var that = this;
          data.forEach(function(gcode){
-            var toolmark = gcode.D.split(' ').last();
             that.exeLine++;
             
-            if(/^T\d+/.test(toolmark)){
-               var tn = parseInt(toolmark.match(/(\d+)/).pop());
+            if(/T?\d+/.test(gcode.D)){
+               var tn = parseInt(gcode.D.match(/T(\d+)/).pop());
                if( tn > 0){
                   that.toolnumber = tn;
                   that.pauseline = that.exeLine;
