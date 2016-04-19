@@ -1,105 +1,33 @@
 Solution for an automatic toolchange XTC
 ===============================================
 
-# spindle get tool
-- Spindle move to a specific point
-- via hall sensor search for correct rotation position
-- move down in a tool nut, center a 3.177 hole with tool
-- pulse in cw direction and count the rotations
-- pulse with full power and for one second
+# Description
 
-# spindle release tool
-- Spindle move to a specific point
-- via hall sensor search for correct rotation position
-- move down in a tool nut, center a 3.177 hole with tool
-- pulse with full power and for one second in CR direction
-- pulse in cr direction and count the rotations
+For my XDisPlace project i try to find a solution to bring all processes together. I wrote a ToDo what i need to bring this project to fly. I realized, all what i need it's only to find a solution for an Automatic Tool Changer (ATC).
 
-# Nut holder
-- get a nut with sw17mm: http://www.amazon.de/dp/B005I4PWUQ
-- mill quadrat block for nut
-- center a hole with 3.178/15mm
-- work table has 7.5mm slots every 30 mm
-- bolts are M6
+![XDisPlace](https://lh3.googleusercontent.com/hJQ62omTeoFyo_g-iEoer4g-bX4MI_faNayzBDcgYmb5MXoNdrYOjGyU6H6BM-zRHPP4iZsEpLAsiJ4kWKxMED0UEnBkswWeHk1lf4gjEVPSBChhVWfMXu2Pq7LBoScjsVigO1ncac6EFLbz6TS4JzGaeNvrE1yW20GngXDywDwUCTZXwYJFTd0mXhfR_RpTnoG-cKBxrhTFX2z0-Ny5FyIM0X_tfB4QXmAlxlGAgMMMbEYeHX8ujfmG2eYKIdZDDY6tMc36ubm3tBbufcwIMUKkv1WwpP5XCBVXEyZtxczhxO9NNgBX2IujIDK0AHd3TqaQuNCldbPOPtPPUTGJygbpUeO3B7C-4YJCpgdpUBmeCD37skRINmUSGnzdPqgGmJpDPecfxDTJaR_tsoe-1am0EqKdWqXFlYVn3eTGXmlH38l5OZY7F4NcezP1ec6pjRkrezuvGCC4Z6pmuR5vxixiXfqwaz_pnXxGjmKMtCDqJqXPx03EgAw_pb-jzKF_TENrgFxnhomxIh0y2F-C750PXT_Is1ZiJhXsxQher2OX5T_XcfFlHJB54Kr2jD4deg5qNQ=w1319-h989-no)
 
-# tourque
-- We need 7-9kg (15-25 FT-LBS) Torque to tighten an ER11 Collet: https://www.maritool.com/faq/collet-questions#27
-- My 400W Spindle has a maximum Torque of 0.53 Newton meter, calculated 5.4kg http://gowww.m.convert-units.info/torque/newton-meter/0.53
-- This is close to the minimum torque of 7kg and enough for cut/mill/drill a PCB.
+I'm proud to present my XTC (eXtremly simple automatic Tool Changer). The most ATC's for spindles cost around up to 2500 and more bucks. For me it's to expensive and i play a small braingame "If it possible to make this process more simple and cheaper?" and the Answer is "yes!". I use only some standard elements with a special DC Motor Driver.
 
+<iframe width="640" height="480" src="https://www.youtube.com/embed/49Iyu2OID74" frameborder="0" allowfullscreen></iframe>
 
-# Software
-- wrote a serial command program to stop/start/breake a Motor
-- can include as a normal serial device to SPJS
+This DC Motor driver comes from Polulu and his some nice Features. We can measure the actual current and rotate the DC motor forward or backward. A simple but nice feature, we can control the speed in both direction and can break the spindle immediatly. Here you see my first prototype, the dc driver are connected to an arduino and i wrote a small program to control all features from driver via a serial console.
 
-# Implement a tool change to gcode
+Foto from Arduino+DC Driver with connected Spindle.
 
-Use an macro, that only connect to XTC Console and send all commands after XTC[1234].
-- parameters are
-   params = {
-      max_detight_time: 250ms,
-      max_tight_time:   500ms,
-      loose_time:       250ms,
-      slow_rotate:      30rpm,       
-      fast_rotate:      400rpm,    
+The commands are easy, you can send "help" and you get all possible commands, the first one are forward and backward. This commands understand the speed parameter from zero to 400, as second parameter you can give the time in milliseconds. Ok, in example. You want to drive the spindle forward with full power but only for 1 second. Please input "fwd 400" for forward full power and as second "1000" miliseconds. Here the result ... Another very nice command are brk, that's a ACTIVE Break. Ok, we drive our spindle with full power and after that we break this with "brk". Cool or?
 
-      max_power:        4000mA,
-      min_power:        200mA,
+Screenshot cp serial console
 
-      clearance_height: 25mm,   
+Now comes the realy cool thing, with "lev" we can set the level of current. You start the spindle and try to stop with ur Hand, the current will go up, if the current higher as the level the spindle will stop immediatly. With other words, will something the spindle stress then he break in this moment. Why we need this, well .. wait a minute :)
 
-      XTC1: {
-         x: 100, # pos X from XTC Holder alpha
-         y: -50, # pos Y from XTC Holder alpha
-         z: -5   # end pos Z from collet at XTC Holder alpha
-      },
-      XTC2: {
-         x: 100, # pos X from XTC Holder beta
-         y: -50, # pos Y from XTC Holder beta
-         z: -5   # end pos Z from collet at XTC Holder beta
-      },
-      ...
-   };
+"tim" stays for time and let the motor stop after some milliseconds, i.e. bwd 200\ntim 500\n let the spindle rotate backwards and break after 500ms.
 
-- example to get an endmill:
-   ```
-   ( get a endmill from XTC1)
-   G0 X100 Y-50 Z20                      (move to xtc alpha)
-   (chilipeppr_pause XTC lev 200)        (the spindle will stop at a minimum current = 200mA)
-   (chilipeppr_pause XTC fwd 30)         (forward rotate spindle very slow)
-   G1 Z-5 F100                           (go down to a specific position, zero pos from spindle holder in nut)
-
-   # Now spindle are in the nut, tight the collet
-   (chilipeppr_pause XTC lev 4000)       (the spindle will stop at a minimum current >= 4A)
-   (chilipeppr_pause XTC fwd 400)        (forward rotate spindle very fast)
-   (chilipeppr_pause XTC tim 500)        (stop rotate after 500 milliseconds or current >= 4A)
-   G0 Z25                                (go up clearance hight)
-   ```
-
-- example to put an endmill:
-   ```
-   ( put a endmill to XTC2)
-   G0 X50 Y-50 Z20                       (move to xtc beta)
-   (chilipeppr_pause XTC lev 200)        (the spindle will stop at a minimum current = 200mA)
-   (chilipeppr_pause XTC fwd 30)         (forward rotate spindle very slow)
-   G1 Z-5 F100                           (go down to a specific position, zero pos from spindle holder in nut)
-
-   # Now spindle are in the nut, detight the collet
-   # the spindle will drive backward with full power, 
-   # if the current sinks under 0.4A then collet loose and stop the spindle
-   (chilipeppr_pause XTC lev 4000)       (the spindle will stop at a maximum current >= 4A)
-   (chilipeppr_pause XTC bwd 400)        (backward rotate spindle very fast)
-   (chilipeppr_pause XTC lev -400)       (the spindle will stop at a minimum current <= 0.4A)
-
-   # now we drive some rotation to make the collect loose
-   (chilipeppr_pause XTC lev 1000)       (the spindle will stop at a maximum current >= 1A)
-   (chilipeppr_pause XTC bwd 30)         (backward rotate spindle very slow)
-   (chilipeppr_pause XTC tim 250)        (and wait to stop after 250 milliseconds)
-
-   G0 Z25                                 (go up clearance hight)
-   ```
-   
-
+"dbg" are for debugging, you can start and stop a logging for all parameters. Yue will see every 250 milliseconds the actual data from DC Controller.
+ 
+Now i wrote a some lines in my XDisPlace Macro to control | Chilipeppr, second camera to CNC machine
+ 
+ 
 
 # Links:
 - Change direction of a spindle, but use SSR's: 

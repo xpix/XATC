@@ -135,8 +135,8 @@ var myXTCMacro = {
          data.forEach(function(gcode){
             that.exeLine++;
             
-            if(/T?\d+/.test(gcode.D)){
-               var tn = parseInt(gcode.D.match(/T(\d+)/).pop());
+            if(/T(\d+)/.exec(gcode.D)){
+               var tn = parseInt(RegExp.$1);
                if( tn > 0){
                   that.toolnumber = tn;
                   that.pauseline = that.exeLine;
