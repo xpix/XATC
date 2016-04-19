@@ -46,7 +46,6 @@ var myXTCMacro = {
     feedRate: 100,
     toolnumber: 0,
     pauseline: 0,
-    exeLine: 0,
 	toolinuse: 0,
 	init: function() {
       // Uninit previous runs to unsubscribe correctly, i.e.
@@ -63,8 +62,6 @@ var myXTCMacro = {
 
       // Check for Automatic Toolchange Command
       chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);
-      chilipeppr.subscribe("/com-chilipeppr-widget-serialport/jsonSend", this, this.onJsonSend);
-	  chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/onExecute", this, this.onATC);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
@@ -74,10 +71,7 @@ var myXTCMacro = {
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
       chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);		
-      chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/onExecute", this, this.onATC);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
-      chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/jsonSend", this, this.onJsonSend);
-      this.exeLine = 0;
    },
    onStateChanged: function(state){
       console.log('ATC State:', state, this);
@@ -123,60 +117,43 @@ var myXTCMacro = {
 			} else if (gcodeline.match(/\bM3\b/i)) {
 				// turn spindle on
 				chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", "send " + this.serialPortXTC + " fwd 400\n");
+			} else if (gcodeline.match(/\bM6\b/i)) {
+            if(gcodeline.match(/T(\d+)/)){
+                this.onATC({line: index, toolnumber: parseInt(RegExp.$1)});
+            }
 			}
 		}
 	},
-    onJsonSend: function(data){
-      // test to M6 and try to find the toolnumber
-      console.log('ATC data', data);
-
-      if($.type(data) === 'array'){
-         var that = this;
-         data.forEach(function(gcode){
-            that.exeLine++;
-            
-            if(/T(\d+)/.exec(gcode.D)){
-               var tn = parseInt(RegExp.$1);
-               if( tn > 0){
-                  that.toolnumber = tn;
-                  that.pauseline = that.exeLine;
-               }
-               console.log('ATC Toolnumber/Pauseline', that.toolnumber, that.pauseline);
-            }
-         });
-      }
-   },
-   // catch M6 T* in gcode at executet (pause) Time
-   // decide to get a new or put first the old tool on holder 
    onATC: function(data){
-      console.log('ATC Execute Line:', data, data.line);
+      console.log('ATC Execute Line:', data);
       var waitToUnPause = 0;
       // now the machine is in pause mode
       // cuz M6 linenumber are the same as actual linenumber
       // and we can do whatever we like :)
-      if(data.line == this.pauseline){
-         console.log('ATC Process:', this);
+      console.log('ATC Process:', this);
 
-         // check if a different tool in use
-         if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
-            this.atc_move_to_holder(this.toolinuse);     // move to holder ...
-            setTimeout(this.atc_loose.bind(this), 250);  // put tool in holder
-            waitToUnPause += 4000;
-         }
-         
-         // get new tool from holder, if neccessary
-         if(this.toolnumber > 0){
-            this.atc_move_to_holder(this.toolnumber);    // move to holder ...
-            // wait for stop state
-            setTimeout(this.atc_tight.bind(this), 250);  // get tool from holder
-            waitToUnPause += 4000;
-         }
-         // wait for tighten process and move to a secure position and unpause this toolchange
-         var that = this;
-         setTimeout(function () {
-             that.unpauseGcode();
-         }, waitToUnPause);
+      this.toolnumber = data.toolnumber;
+
+      // check if a different tool in use
+      if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
+        this.atc_move_to_holder(this.toolinuse);     // move to holder ...
+        setTimeout(this.atc_loose.bind(this), 250);  // put tool in holder
+        waitToUnPause += 4000;
       }
+     
+      // get new tool from holder, if neccessary
+      if(this.toolnumber > 0){
+        this.atc_move_to_holder(data.toolnumber);    // move to holder ...
+        // wait for stop state
+        setTimeout(this.atc_tight.bind(this), 250);  // get tool from holder
+        waitToUnPause += 4000;
+      }
+      // wait for tighten process and move to a secure position and unpause this toolchange
+      var that = this;
+      setTimeout(function () {
+         // TODO: Remove window, maybe trigger the pause button
+         that.unpauseGcode();
+      }, waitToUnPause);
    },
    atc_move_to_holder: function( toolnumber ){
       // get parameters for millholder
@@ -231,7 +208,7 @@ var myXTCMacro = {
       // unset tool in use
       this.toolinuse = 0;
    },
-   atc_tight: function(){
+   atc_tight: function(data){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.State != "Stop"){ // wait for stop state
          setTimeout(this.atc_tight.bind(this), 100);
