@@ -120,6 +120,7 @@ var myXTCMacro = {
 				chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", "send " + this.serialPortXTC + " fwd 400\n");
 			} else if (gcodeline.match(/\bM6\b/i)) {
             if(gcodeline.match(/T(\d+)/)){
+                this.action = 'idle';
                 this.onATC({line: index, toolnumber: parseInt(RegExp.$1)});
             }
 			}
@@ -127,7 +128,7 @@ var myXTCMacro = {
 	},
 
    setAction: function(status){
-      if(this.State != "Stop"){ // wait for stop state
+      if(this.State != "Stop" && this.State != "End"){ // wait for stop state
          // console.log('ATC Wait for setAction', status);
          setTimeout(this.setAction.bind(this, status), 250);
          return;
@@ -143,9 +144,6 @@ var myXTCMacro = {
       // cuz M6 linenumber are the same as actual linenumber
       // and we can do whatever we like :)
       console.log('ATC Process:', this);
-
-      // Wait for stop and set to idle
-      this.setAction('idle');
 
       this.toolnumber = data.toolnumber;
 
