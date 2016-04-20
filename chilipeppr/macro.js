@@ -143,7 +143,7 @@ var myXTCMacro = {
      
       // get new tool from holder, if neccessary
       if(this.toolnumber > 0){
-        this.atc_move_to_holder(data.toolnumber);    // move to holder ...
+        this.atc_move_to_holder(this.toolnumber);    // move to holder ...
         // wait for stop state
         setTimeout(this.atc_tight.bind(this), 250);  // get tool from holder
         waitToUnPause += 4000;
@@ -156,6 +156,13 @@ var myXTCMacro = {
       }, waitToUnPause);
    },
    atc_move_to_holder: function( toolnumber ){
+      // wait on main cnccontroller's stop state (think asynchron!)
+      if(this.State != "Stop"){ // wait for stop state
+         console.log('ATC Wait for stop', 'atc_move_to_holder');
+         setTimeout(this.atc_move_to_holder.bind(this, toolnumber), 250);
+         return;
+      }
+
       // get parameters for millholder
       var atcparams = this.atcParameters;
       var holder = this.atcMillHolder[ (toolnumber-1) ]; 
@@ -185,7 +192,8 @@ var myXTCMacro = {
    atc_loose: function(){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.State != "Stop"){ // wait for stop state
-         setTimeout(this.atc_loose.bind(this), 100);
+         console.log('ATC Wait for stop', 'atc_loose');
+         setTimeout(this.atc_loose.bind(this), 250);
          return;
       }
 
@@ -211,7 +219,8 @@ var myXTCMacro = {
    atc_tight: function(data){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.State != "Stop"){ // wait for stop state
-         setTimeout(this.atc_tight.bind(this), 100);
+         console.log('ATC Wait for stop', 'atc_tight');
+         setTimeout(this.atc_tight.bind(this), 250);
          return;
       }
 
@@ -231,6 +240,7 @@ var myXTCMacro = {
    },
    unpauseGcode: function() {
       if(this.State != "Stop"){ // wait for stop state
+         console.log('ATC Wait for stop', 'unpauseGcode');
          setTimeout(this.unpauseGcode.bind(this), 500);
          return;
       }
