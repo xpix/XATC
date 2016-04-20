@@ -270,7 +270,7 @@ var myXTCMacro = {
       // set tool in use
       this.toolinuse = this.toolnumber;
 
-      setTimeout(this.setAction.bind(this, 'tighten'), 250); // wait for stop and set status
+      setTimeout(this.setAction.bind(this, 'tighten'), 1000); // wait for stop and set status
       this.atc_sec_height();                                 // wait for loosed state and go to safety height
    },
 
