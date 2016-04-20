@@ -128,7 +128,7 @@ var myXTCMacro = {
 
    setAction: function(status){
       if(this.State != "Stop"){ // wait for stop state
-         console.log('ATC Wait for setAction', status);
+         // console.log('ATC Wait for setAction', status);
          setTimeout(this.setAction.bind(this, status), 250);
          return;
       }
@@ -167,10 +167,12 @@ var myXTCMacro = {
    atc_move_to_holder: function( toolnumber ){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.action != "idle"){ // wait for idle state
-         console.log('ATC Wait for idle', 'atc_move_to_holder');
+         // console.log('ATC Wait for idle', 'atc_move_to_holder');
          setTimeout(this.atc_move_to_holder.bind(this, toolnumber), 250);
          return;
       }
+
+      console.log('ATC called: ', 'atc_move_to_holder', toolnumber);
 
       // get parameters for millholder
       var atcparams = this.atcParameters;
@@ -203,10 +205,13 @@ var myXTCMacro = {
 
    atc_sec_height: function(){
       if(this.action != "tighten" && this.action != "loosed"){ // wait for moved state
-         console.log('ATC Wait for tighten/loosed', 'atc_sec_height');
+         // console.log('ATC Wait for tighten/loosed', 'atc_sec_height');
          setTimeout(this.atc_sec_height.bind(this), 250);
          return;
       }
+
+      console.log('ATC called: ', 'atc_sec_height');
+
       var cmd = "G0 Z" + this.atcParameters.safetyHeight + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
       setTimeout(this.setAction.bind(this, 'idle'), 250); // wait for stop and set status
@@ -215,12 +220,13 @@ var myXTCMacro = {
    atc_loose: function(){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.action != "moved"){ // wait for moved state
-         console.log('ATC Wait for moved', 'atc_loose');
+         // console.log('ATC Wait for moved', 'atc_loose');
          setTimeout(this.atc_loose.bind(this), 250);
          return;
       }
 
-      // ok state == stop, now we can tighten nut and move the machine 
+      // ok action == moved, now we can loose nut and move the machine 
+      console.log('ATC called: ', 'atc_loose');
 
       var atcparams = this.atcParameters;
       var holder = this.atcMillHolder[ (this.toolinuse-1)];
@@ -246,12 +252,13 @@ var myXTCMacro = {
    atc_tight: function(data){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.action != "moved"){ // wait for moved state
-         console.log('ATC Wait for moved', 'atc_tight');
+         // console.log('ATC Wait for moved', 'atc_tight');
          setTimeout(this.atc_tight.bind(this, data), 250);
          return;
       }
 
       // ok state == moved, now we can tighten nut and move the machine 
+      console.log('ATC called: ', 'atc_tight');
 
       var atcparams = this.atcParameters;
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
@@ -271,10 +278,11 @@ var myXTCMacro = {
 
    unpauseGcode: function() {
       if(this.action != "tighten"){ // wait for stop state
-         console.log('ATC Wait for stop', 'unpauseGcode');
+         // console.log('ATC Wait for stop', 'unpauseGcode');
          setTimeout(this.unpauseGcode.bind(this), 1000);
          return;
       }
+      console.log('ATC called: ', 'unpauseGcode');
       macro.status("Just unpaused gcode.");
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", "");
       
