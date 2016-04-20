@@ -202,7 +202,7 @@ var myXTCMacro = {
    },
 
    atc_sec_height: function(){
-      if(this.action != "tighten" || this.action != "loosed"){ // wait for moved state
+      if(this.action != "tighten" && this.action != "loosed"){ // wait for moved state
          console.log('ATC Wait for tighten/loosed', 'atc_sec_height');
          setTimeout(this.atc_sec_height.bind(this), 250);
          return;
