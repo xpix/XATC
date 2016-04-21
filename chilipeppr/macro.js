@@ -9,7 +9,27 @@ This Macro remember on the used tool and find the correct strategie to let the
 actual used tool in the holder and get a new one.
 
 This will parse the comment to get gcode from commandline i.e.:
-   M6 T1
+   M6 T2
+after this command, the machine are in pause mode and we can change
+the tool. Here the flow:
+
+   * check if a tool used (T1)
+   * put the used tool to holder
+      * move to holder with toolnumber == 1
+      * set spindle speed and level
+      * move down in the nut
+      * loose the nut with full power and negative current sense 
+         (i.e: -4000, if the current fall under 4Ampere then stop)
+      * got to safety height   
+   * get the next toolnumber(T2)
+      * move to holder with toolnumber == 2
+      * set spindle speed and level
+      * move down in the nut
+      * tight the nut with full power and for a specific time 
+         (i.e: fwd 300 500, set 75% power and tight the collet for 0.5 sec)
+      * got to safety height
+   * call unpause the M6 Stop
+   
   
 And then it sends commands to a Arduino+DC Spindle Controller
 to pre-poition, tight or loose the ER11 Collet.
@@ -22,11 +42,10 @@ To test this with tinyg2 or tinyg follow this steps:
    * choose "tinygg2" in SPJS Widget
 
 */
-if (!Array.prototype.last){
+if (!Array.prototype.last)
     Array.prototype.last = function(){
         return this[this.length - 1];
     };
-};
 
 var myXTCMacro = {
     serialPortXTC:    "/dev/ttyUSB2", // XTC Controlelr
@@ -96,7 +115,7 @@ var myXTCMacro = {
 		// see callbacks too, but we only want real gcode data here
 		if (data.Id.match(/^g(\d+)/)) {
 			// $1 is populated with digits from the .match regex above
-			var index = parseInt(RegExp.$1); 
+			var index = parseInt(RegExp.$1,10); 
 			// our id is always 1 ahead of the gcode.lines array index, i.e.
 			// line 1 in the widget is this.gcode.lines[0]
             // Ignore empty lines
@@ -114,6 +133,7 @@ var myXTCMacro = {
 			// hit on M30
 			if (gcodeline.match(/\bM5\b/i) || gcodeline.match(/\bM30\b/i)) {
 				// turn spindle off
+				// TODO: switched off to fast!
 				chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", "send " + this.serialPortXTC + " brk\n");
 			} else if (gcodeline.match(/\bM3\b/i)) {
 				// turn spindle on
@@ -121,7 +141,7 @@ var myXTCMacro = {
 			} else if (gcodeline.match(/\bM6\b/i)) {
             if(gcodeline.match(/T(\d+)/)){
                 this.action = 'idle';
-                this.onATC({line: index, toolnumber: parseInt(RegExp.$1)});
+                this.onATC({line: index, toolnumber: parseInt(RegExp.$1,10)});
             }
 			}
 		}
@@ -149,20 +169,20 @@ var myXTCMacro = {
 
       // check if a different tool in use
       if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
-        this.atc_move_to_holder(this.toolinuse);     // move to holder ...
+        this.atc_move_to_holder(this.toolinuse, 'moved_loose');     // move to holder ...
         this.atc_loose();                            // put tool in holder
       }
      
       // get new tool from holder, if neccessary
       if(this.toolnumber > 0){
-        this.atc_move_to_holder(this.toolnumber);    // move to holder ...
+        this.atc_move_to_holder(this.toolnumber, 'moved_tight');    // move to holder ...
         this.atc_tight();                            // get tool from holder
       }
       
       this.unpauseGcode();
    },
 
-   atc_move_to_holder: function( toolnumber ){
+   atc_move_to_holder: function( toolnumber, art ){
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.action != "idle"){ // wait for idle state
          // console.log('ATC Wait for idle', 'atc_move_to_holder');
@@ -197,8 +217,9 @@ var myXTCMacro = {
       // slowly to the minus end ollet Z position  ...
       cmd += "G0 Z" + atcparams.nutZ + " F" + atcparams.feedRate + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
-
-      setTimeout(this.setAction.bind(this, 'moved'), 250); // wait for stop and set status
+      
+      // separate art == moved_tight or moved_loose
+      setTimeout(this.setAction.bind(this, art), 250); // wait for stop and set status
    },
 
    atc_sec_height: function(){
@@ -217,7 +238,7 @@ var myXTCMacro = {
 
    atc_loose: function(){
       // wait on main cnccontroller's stop state (think asynchron!)
-      if(this.action != "moved"){ // wait for moved state
+      if(this.action != "moved_loose"){ // wait for moved state
          // console.log('ATC Wait for moved', 'atc_loose');
          setTimeout(this.atc_loose.bind(this), 250);
          return;
@@ -237,7 +258,7 @@ var myXTCMacro = {
       // ... set the NEGATVE level, if the current go down ... i.e. under 3000mA ... the the collet are loose
       setTimeout(function() { 
          var cmdwait = "send " + this.serialPortXTC + " " + "lev " + atcparams.revlevel + "\n"; 
-         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmdwait);
       }, (holder.time/2)); // <-- half of holder.time
 
       // unset tool in use
@@ -249,7 +270,7 @@ var myXTCMacro = {
 
    atc_tight: function(data){
       // wait on main cnccontroller's stop state (think asynchron!)
-      if(this.action != "moved"){ // wait for moved state
+      if(this.action != "moved_tight"){ // wait for moved state
          // console.log('ATC Wait for moved', 'atc_tight');
          setTimeout(this.atc_tight.bind(this, data), 250);
          return;
@@ -258,13 +279,12 @@ var myXTCMacro = {
       // ok state == moved, now we can tighten nut and move the machine 
       console.log('ATC called: ', 'atc_tight');
 
-      var atcparams = this.atcParameters;
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
       // tighten process
       var cmd = "send " 
                   + this.serialPortXTC + " " 
-                  + "fwd " + holder.tourque + " " + holder.time + "\n"
+                  + "fwd " + holder.tourque + " " + holder.time + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // set tool in use
@@ -275,7 +295,7 @@ var myXTCMacro = {
    },
 
    unpauseGcode: function() {
-      if(this.action != "tighten"){ // wait for stop state
+      if(this.action != "tighten"){ // wait for tighten state, that have to be the last state :)
          // console.log('ATC Wait for stop', 'unpauseGcode');
          setTimeout(this.unpauseGcode.bind(this), 1000);
          return;
@@ -286,9 +306,6 @@ var myXTCMacro = {
       
       this.setAction('idle');
    },
-   distance2time:function(distance){
-      return (distance / this.feedRate) * (60*1000); // distane in milliseconds
-   },
 };
-// call init from cp macro loader
+// call init from cp 
 // myXTCMacro.init();
