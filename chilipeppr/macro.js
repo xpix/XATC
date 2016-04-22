@@ -86,8 +86,6 @@ var myXTCMacro = {
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
-      
-      this.getGcode();
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
