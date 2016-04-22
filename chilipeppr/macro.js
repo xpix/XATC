@@ -147,15 +147,14 @@ var myXTCMacro = {
 	},
 
    updateAxesFromStatus: function (axes) {
-      console.log("ATC updateAxesFromStatus:", axes);
       if ('x' in axes && axes.x !== null) {
-          this.axis.x = axes.x;
+          this.axis.x = (Math.round( axes.x * 10 )/10 );
       }
       if ('y' in axes && axes.y !== null) {
-          this.axis.y = axes.y;
+          this.axis.y = (Math.round( axes.y * 10 )/10 );
       }
       if ('z' in axes && axes.z !== null) {
-          this.axis.z = axes.z;
+          this.axis.z = (Math.round( axes.z * 10 )/10 );
       }
 
       var that = this;
@@ -165,6 +164,7 @@ var myXTCMacro = {
       // then fire up the planned event
       this.events.forEach(function(entry){
          if(entry.x == that.axis.x && entry.y == that.axis.y && entry.z == that.axis.z){
+      		console.log("ATC updateAxesFromStatus:", that.axis);
             entry.event.resolve();                                // Fire up the event
             console.log('ATC fire Event: ', entry.comment);
          }
@@ -194,13 +194,13 @@ var myXTCMacro = {
    },
 
    atc_move_to_holder: function( toolnumber, art ){
+
+      console.log('ATC called: ', 'atc_move_to_holder', toolnumber, art);
       // wait on main cnccontroller's stop state (think asynchron!)
       if(this.State != "Stop"){ // wait for idle state
-         setTimeout(this.atc_move_to_holder.bind(this, toolnumber), 250);
+         setTimeout(this.atc_move_to_holder.bind(this, toolnumber, art), 250);
          return;
       }
-
-      console.log('ATC called: ', 'atc_move_to_holder', toolnumber);
 
       // get parameters for millholder
       var atcparams = this.atcParameters;
@@ -232,7 +232,7 @@ var myXTCMacro = {
       var looseColletZPos = atcparams.nutZ+2;
 
       // add a rule if looseCollet event happend after startSpindleSlow
-      $.when( startSpindleSlow, looseCollet )
+      $.when( looseCollet )
          .done( this.atc_unscrew.bind(this) );
 
       // register the event for updateAxesFromStatus, 
@@ -247,7 +247,7 @@ var myXTCMacro = {
       var tightColletZPos = atcparams.nutZ;
       
       // add a rule if tightCollet event happend
-      $.when( startSpindleSlow, tightCollet )
+      $.when( tightCollet )
          .done( this.atc_screw.bind(this) );
 
       // register the event for updateAxesFromStatus, 
@@ -263,7 +263,7 @@ var myXTCMacro = {
       
       // add a rule if unpause event happend 
       // after startSpindleSlow and tightCollet 
-      $.when( startSpindleSlow, tightCollet, unpause )
+      $.when( unpause )
          .done( this.unpauseGcode.bind(this, art) );
 
       // register the event for updateAxesFromStatus, 
@@ -279,7 +279,7 @@ var myXTCMacro = {
 
       // now move spindle to the holder position
       // first to safetyHeight ...
-      var cmd;
+      var cmd = '';
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
       // then to holder center ...
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
