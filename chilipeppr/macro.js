@@ -48,25 +48,25 @@ if (!Array.prototype.last)
     };
 
 var myXTCMacro = {
-    serialPortXTC:    "/dev/ttyUSB2", // XTC Controlelr
-    atcParameters: {
-      level:   800,     // the current level in mA where the spindle will break
-      revlevel:-3000,   // the reverse level in mA where the spindle will break
-      forward: 30,      // value for minimum rpm
-      safetyHeight: 35, // safety height
-      feedRate: 300,    // Feedrate to move over the catch cable
-      nutZ: -7,         // safety deep position of collet in nut
+      serialPortXTC:    "/dev/ttyUSB2", // XTC Controlelr
+      atcParameters: {
+         level:   800,     // the current level in mA where the spindle will break
+         revlevel:-3000,   // the reverse level in mA where the spindle will break
+         forward: 30,      // value for minimum rpm
+         safetyHeight: 35, // safety height
+         feedRate: 300,    // Feedrate to move over the catch cable
+         nutZ: -7,         // safety deep position of collet in nut
     },
     atcMillHolder: [
       // Center Position holder, catch height, tighten value, how long tighten in milliseconds
       // ---------|-------------|-------------|--------------------------------
       {posX : -235, posY : 26.5,   posZ: 5,   tourque: 300, time: 500}, // first endmill holder
     ],
-    feedRate: 100,
-    toolnumber: 0,
-    pauseline: 0,
+   feedRate: 100,
+   toolnumber: 0,
 	toolinuse: 0,
-   action: '',
+   axis: {x:0, y:0, z:0},
+   events: [],
 	init: function() {
       // Uninit previous runs to unsubscribe correctly, i.e.
       // so we don't subscribe 100's of times each time we modify
@@ -81,6 +81,7 @@ var myXTCMacro = {
       window["myXTCMacro"] = this;
 
       // Check for Automatic Toolchange Command
+      chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       
@@ -90,14 +91,13 @@ var myXTCMacro = {
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
+      chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);		
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
    },
    onStateChanged: function(state){
       console.log('ATC State:', state, this);
       this.State = state;
-      if(this.State === 'End')
-         this.exeLine = 0;
    },
 	getGcode: function() {
 		chilipeppr.subscribe("/com-chilipeppr-widget-gcode/recvGcode", this, this.getGcodeCallback);
@@ -140,22 +140,37 @@ var myXTCMacro = {
 				chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", "send " + this.serialPortXTC + " fwd 400\n");
 			} else if (gcodeline.match(/\bM6\b/i)) {
             if(gcodeline.match(/T(\d+)/)){
-                this.action = 'idle';
-                this.onATC({line: index, toolnumber: parseInt(RegExp.$1,10)});
+                this.onATC({toolnumber: parseInt(RegExp.$1,10)});
             }
 			}
 		}
 	},
 
-   setAction: function(status){
-      if(this.State != "Stop" && this.State != "End"){ // wait for stop state
-         // console.log('ATC Wait for setAction', status);
-         setTimeout(this.setAction.bind(this, status), 250);
-         return;
+   updateAxesFromStatus: function (axes) {
+      console.log("ATC updateAxesFromStatus:", axes);
+      if ('x' in axes && axes.x !== null) {
+          this.axis.x = axes.x;
       }
-      console.log('ATC Set ACtion status to -->', status);
-      this.action = status;
+      if ('y' in axes && axes.y !== null) {
+          this.axis.y = axes.y;
+      }
+      if ('z' in axes && axes.z !== null) {
+          this.axis.z = axes.z;
+      }
+
+      var that = this;
+
+      // check all events and compare the axis states with event states
+      // if has the event xyz the same values as the actual position
+      // then fire up the planned event
+      this.events.forEach(function(entry){
+         if(entry.x == that.axis.x && entry.y == that.axis.y && entry.z == that.axis.z){
+            entry.event.resolve();                                // Fire up the event
+            console.log('ATC fire Event: ', entry.comment);
+         }
+      });
    },
+
 
    onATC: function(data){
       console.log('ATC Execute Line:', data);
@@ -166,26 +181,21 @@ var myXTCMacro = {
       console.log('ATC Process:', this);
 
       this.toolnumber = data.toolnumber;
+      this.events = [];
 
       // check if a different tool in use
       if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
-        this.atc_move_to_holder(this.toolinuse, 'moved_loose');     // move to holder ...
-        this.atc_loose();                            // put tool in holder
+         this.atc_move_to_holder(this.toolinuse, 'unscrew'); // move to holder and unscrew
+      } 
+      else if(this.toolnumber > 0){
+         // get new tool from holder, if neccessary
+   	   this.atc_move_to_holder(this.toolnumber, 'screw'); // move to holder and screw
       }
-     
-      // get new tool from holder, if neccessary
-      if(this.toolnumber > 0){
-        this.atc_move_to_holder(this.toolnumber, 'moved_tight');    // move to holder ...
-        this.atc_tight();                            // get tool from holder
-      }
-      
-      this.unpauseGcode();
    },
 
    atc_move_to_holder: function( toolnumber, art ){
       // wait on main cnccontroller's stop state (think asynchron!)
-      if(this.action != "idle"){ // wait for idle state
-         // console.log('ATC Wait for idle', 'atc_move_to_holder');
+      if(this.State != "Stop"){ // wait for idle state
          setTimeout(this.atc_move_to_holder.bind(this, toolnumber), 250);
          return;
       }
@@ -199,112 +209,148 @@ var myXTCMacro = {
       if($.type(holder) !== 'object')
          return;
 
-      // start spindle very slow and set current level
-      var cmd = "send " 
-                  + this.serialPortXTC + " " 
-                  + "fwd " + (atcparams.forward+100) + "\n" 
-                  + "fwd " + atcparams.forward + "\n" 
-                  + "lev " + atcparams.level + "\n";
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      // -------------------- EVENT Planning -----------------------------------
+
+      // Prepare event StartSpindleSlow ----------------------------------------
+      var startSpindleSlow = $.Deferred();
+      var startSpindleSlowZPos = atcparams.safetyHeight;
+
+      // add a rule if startSpindleSlow event happend
+      $.when( startSpindleSlow )
+         .done( this.startSpindle.bind(this, atcparams.forward, atcparams.level) );
+
+      // register the event for updateAxesFromStatus, 
+      // the cool thing this event will only one time fired :)
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
+         event: startSpindleSlow,
+         comment: 'Start spindle slow for pre-position.',
+      });
+
+
+      // Prepare event looseCollet ---------------------------------------------
+      var looseCollet = $.Deferred();
+      var looseColletZPos = atcparams.nutZ+2;
+
+      // add a rule if looseCollet event happend after startSpindleSlow
+      $.when( startSpindleSlow, looseCollet )
+         .done( this.atc_unscrew.bind(this) );
+
+      // register the event for updateAxesFromStatus, 
+      // the cool thing this event will only one time fired :)
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:looseColletZPos,
+         event: looseCollet,
+         comment: 'Rotate spindle backwards with full power for 0.5 seconds.',
+      });
+
+      // Prepare event tightCollet ---------------------------------------------
+      var tightCollet = $.Deferred();
+      var tightColletZPos = atcparams.nutZ;
+      
+      // add a rule if tightCollet event happend
+      $.when( startSpindleSlow, tightCollet )
+         .done( this.atc_screw.bind(this) );
+
+      // register the event for updateAxesFromStatus, 
+      // the cool thing this event will only one time fired :)
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:tightColletZPos,
+         event: tightCollet,
+         comment: 'Rotate spindle forward with full power for 0.5 seconds.',
+      });
+
+      // Prepare event unpause ---------------------------------------------
+      var unpause = $.Deferred();
+      var unpausedZPos = atcparams.safetyHeight+0.1;
+      
+      // add a rule if unpause event happend 
+      // after startSpindleSlow and tightCollet 
+      $.when( startSpindleSlow, tightCollet, unpause )
+         .done( this.unpauseGcode.bind(this, art) );
+
+      // register the event for updateAxesFromStatus, 
+      // the cool thing this event will only one time fired :)
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:unpausedZPos,
+         event: unpause,
+         comment: 'Unpause the process and do the job.',
+      });
+
+      // -------------------- EVENT Planning -- END ----------------------------
+
+      var nutZ = (art === 'unscrew' ? looseColletZPos : tightColletZPos);
 
       // now move spindle to the holder position
       // first to safetyHeight ...
+      var cmd;
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
       // then to holder center ...
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
       // then to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
       // slowly to the minus end ollet Z position  ...
-      cmd += "G0 Z" + atcparams.nutZ + " F" + atcparams.feedRate + "\n";
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
+      cmd += "G0 Z" + nutZ + " F" + atcparams.feedRate + "\n";
+      cmd += "G4 P1\n"; // wait a second
+      // move to event position for safetyHeight 
+      cmd += "G0 Z" + unpausedZPos + "\n";   
       
-      // separate art == moved_tight or moved_loose
-      setTimeout(this.setAction.bind(this, art), 250); // wait for stop and set status
+      chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
 
-   atc_sec_height: function(){
-      if(this.action != "tighten" && this.action != "loosed"){ // wait for moved state
-         // console.log('ATC Wait for tighten/loosed', 'atc_sec_height');
-         setTimeout(this.atc_sec_height.bind(this), 250);
-         return;
-      }
+   startSpindle: function(speed, level){
+      var cmd = "send " + this.serialPortXTC + " " 
+                  + "fwd " + (speed+100) + "\n" 
+                  + "fwd " + speed + "\n" 
+                  + "lev " + level + "\n";
+      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      console.log('ATC spindle', cmd);
+   },
 
+   // Event to move to savetyHeight in Z Axis
+   atc_sec_height: function(){
       console.log('ATC called: ', 'atc_sec_height');
 
       var cmd = "G0 Z" + this.atcParameters.safetyHeight + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
-      setTimeout(this.setAction.bind(this, 'idle'), 250); // wait for stop and set status
    },
 
-   atc_loose: function(){
-      // wait on main cnccontroller's stop state (think asynchron!)
-      if(this.action != "moved_loose"){ // wait for moved state
-         // console.log('ATC Wait for moved', 'atc_loose');
-         setTimeout(this.atc_loose.bind(this), 250);
-         return;
-      }
-
+   // Event to move to unscrew the collet
+   atc_unscrew: function(){
       // ok action == moved, now we can loose nut and move the machine 
-      console.log('ATC called: ', 'atc_loose');
-
-      var atcparams = this.atcParameters;
+      console.log('ATC called: ', 'atc_unscrew');
       var holder = this.atcMillHolder[ (this.toolinuse-1)];
       
-      // loose process
+      // unscrew process
       // rotate backward with more power(+50) as the tight process    
-      var cmd = "send " + this.serialPortXTC + " " + "bwd " + (holder.tourque+50) + " " + holder.time + "\n";  
+      var cmd = "send " + this.serialPortXTC + " " 
+         + "bwd " + (holder.tourque+50) + " " + holder.time + "\n";  
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-
-      // ... set the NEGATVE level, if the current go down ... i.e. under 3000mA ... the the collet are loose
-      setTimeout(function() { 
-         var cmdwait = "send " + this.serialPortXTC + " " + "lev " + atcparams.revlevel + "\n"; 
-         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmdwait);
-      }, (holder.time/2)); // <-- half of holder.time
 
       // unset tool in use
       this.toolinuse = 0;
-
-      setTimeout(this.setAction.bind(this, 'loosed'), 250); // wait for stop and set status
-      this.atc_sec_height();                                // wait for loosed state and go to safety height
    },
 
-   atc_tight: function(data){
-      // wait on main cnccontroller's stop state (think asynchron!)
-      if(this.action != "moved_tight"){ // wait for moved state
-         // console.log('ATC Wait for moved', 'atc_tight');
-         setTimeout(this.atc_tight.bind(this, data), 250);
-         return;
-      }
-
+   atc_screw: function(data){
       // ok state == moved, now we can tighten nut and move the machine 
-      console.log('ATC called: ', 'atc_tight');
-
+      console.log('ATC called: ', 'atc_screw');
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
       // tighten process
-      var cmd = "send " 
-                  + this.serialPortXTC + " " 
+      var cmd = "send " + this.serialPortXTC + " " 
                   + "fwd " + holder.tourque + " " + holder.time + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // set tool in use
       this.toolinuse = this.toolnumber;
-
-      setTimeout(this.setAction.bind(this, 'tighten'), 1000); // wait for stop and set status
-      this.atc_sec_height();                                 // wait for loosed state and go to safety height
    },
 
-   unpauseGcode: function() {
-      if(this.action != "tighten"){ // wait for tighten state, that have to be the last state :)
-         // console.log('ATC Wait for stop', 'unpauseGcode');
-         setTimeout(this.unpauseGcode.bind(this), 1000);
+   unpauseGcode: function(art) {
+      console.log('ATC called: ', 'unpauseGcode', art);
+
+      if(art === 'unscrew' && this.toolnumber > 0){
+         // Ok, put the last tool in holder now we get the next one
+         this.onATC({toolnumber: this.toolnumber});
          return;
       }
-      console.log('ATC called: ', 'unpauseGcode');
-      macro.status("Just unpaused gcode.");
+
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", "");
-      
-      this.setAction('idle');
    },
 };
 // call init from cp 
