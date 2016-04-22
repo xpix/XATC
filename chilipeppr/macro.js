@@ -233,13 +233,11 @@ var myXTCMacro = {
       // first to safetyHeight ...
       var cmd = '';
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
-      cmd += "G4 P1\n"; // wait a second
       // then to holder center ...
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
-      cmd += "G4 P1\n"; // wait a second
+      cmd += "G4 P0.5\n"; // wait a second
       // then to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
-      cmd += "G4 P1\n"; // wait a second
       // slowly to the minus end ollet Z position  ...
       cmd += "G0 Z" + nutZ + " F" + atcparams.feedRate + "\n";
       cmd += "G4 P1\n"; // wait a second
