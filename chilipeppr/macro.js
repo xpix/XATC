@@ -135,6 +135,8 @@ var myXTCMacro = {
       // and we can do whatever we like :)
       console.log('ATC Process:', this);
 
+      this.stopSpindle();
+
       this.toolnumber = data.toolnumber;
       this.events = [];
 
@@ -240,7 +242,7 @@ var myXTCMacro = {
       cmd += "G0 Z" + holder.posZ + "\n";
       // slowly to the minus end ollet Z position  ...
       cmd += "G0 Z" + nutZ + " F" + atcparams.feedRate + "\n";
-      cmd += "G4 P1\n"; // wait a second
+      cmd += "G4 P0.5\n"; // wait a second
       // move to event position for safetyHeight 
       cmd += "G0 Z" + unpausedZPos + "\n";   
       
@@ -255,6 +257,13 @@ var myXTCMacro = {
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
       console.log('ATC spindle', cmd);
    },
+
+   stopSpindle: function(){
+      var cmd = "send " + this.serialPortXTC + " " + "brk\n"; 
+      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      console.log('ATC spindle', cmd);
+   },
+
 
    // Event to move to savetyHeight in Z Axis
    atc_sec_height: function(){
