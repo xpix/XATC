@@ -81,8 +81,8 @@ var myXTCMacro = {
       window["myXTCMacro"] = this;
 
       // Check for Automatic Toolchange Command
+	  chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
-      chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
@@ -91,61 +91,18 @@ var myXTCMacro = {
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
+	  chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
-      chilipeppr.unsubscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);		
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
    },
    onStateChanged: function(state){
       console.log('ATC State:', state, this);
       this.State = state;
    },
-	getGcode: function() {
-		chilipeppr.subscribe("/com-chilipeppr-widget-gcode/recvGcode", this, this.getGcodeCallback);
-		chilipeppr.publish("/com-chilipeppr-widget-gcode/requestGcode", "");
-		chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/recvGcode", this.getGcodeCallback);
+	onChiliPepprPauseOnExecute: function(data) {
+		console.log("got onChiliPepprPauseOnExecute. data:", data);
+		this.onATC({toolnumber: 1});
 	},
-	getGcodeCallback: function(data) {
-		this.gcode = data;
-	},
-   // Add control DC Spindle for M3 and M5, M30 will unset all parameters
-	onComplete: function(data) {
-		console.log('ATC onComplete', data);
-		// Id's from the Gcode widget always start with g
-		// If you jog, use the serial port console, or do other stuff we'll 
-		// see callbacks too, but we only want real gcode data here
-		if (data.Id.match(/^g(\d+)/)) {
-			// $1 is populated with digits from the .match regex above
-			var index = parseInt(RegExp.$1,10); 
-			// our id is always 1 ahead of the gcode.lines array index, i.e.
-			// line 1 in the widget is this.gcode.lines[0]
-            // Ignore empty lines
-			if(this.gcode === undefined)
-			   return;
-
-			var gcodeline = this.gcode.lines[index - 1];
-
-            // Ignore empty lines
-			if(gcodeline === undefined)
-			   return;
-			
-			// Try to match M3, M5, and M30 (program end)
-			// The \b is a word boundary so looking for M3 doesn't also
-			// hit on M30
-			if (gcodeline.match(/\bM5\b/i) || gcodeline.match(/\bM30\b/i)) {
-				// turn spindle off
-				// TODO: switched off to fast!
-				chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", "send " + this.serialPortXTC + " brk\n");
-			} else if (gcodeline.match(/\bM3\b/i)) {
-				// turn spindle on
-				chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", "send " + this.serialPortXTC + " fwd 400\n");
-			} else if (gcodeline.match(/\bM6\b/i)) {
-            if(gcodeline.match(/T(\d+)/)){
-                this.onATC({toolnumber: parseInt(RegExp.$1,10)});
-            }
-			}
-		}
-	},
-
    updateAxesFromStatus: function (axes) {
       if ('x' in axes && axes.x !== null) {
           this.axis.x = (Math.round( axes.x * 10 )/10 );
@@ -163,7 +120,7 @@ var myXTCMacro = {
       // if has the event xyz the same values as the actual position
       // then fire up the planned event
       this.events.forEach(function(entry){
-         if(entry.x == that.axis.x && entry.y == that.axis.y && entry.z == that.axis.z){
+         if(entry.event.state() != 'resolved' && entry.x == that.axis.x && entry.y == that.axis.y && entry.z == that.axis.z){
       		console.log("ATC updateAxesFromStatus:", that.axis);
             entry.event.resolve();                                // Fire up the event
             console.log('ATC fire Event: ', entry.comment);
@@ -196,11 +153,6 @@ var myXTCMacro = {
    atc_move_to_holder: function( toolnumber, art ){
 
       console.log('ATC called: ', 'atc_move_to_holder', toolnumber, art);
-      // wait on main cnccontroller's stop state (think asynchron!)
-      if(this.State != "Stop"){ // wait for idle state
-         setTimeout(this.atc_move_to_holder.bind(this, toolnumber, art), 250);
-         return;
-      }
 
       // get parameters for millholder
       var atcparams = this.atcParameters;
@@ -263,7 +215,7 @@ var myXTCMacro = {
       
       // add a rule if unpause event happend 
       // after startSpindleSlow and tightCollet 
-      $.when( unpause )
+      $.when( startSpindleSlow, unpause )
          .done( this.unpauseGcode.bind(this, art) );
 
       // register the event for updateAxesFromStatus, 
@@ -275,16 +227,21 @@ var myXTCMacro = {
 
       // -------------------- EVENT Planning -- END ----------------------------
 
+      console.log('ATC events', this.events);
+
       var nutZ = (art === 'unscrew' ? looseColletZPos : tightColletZPos);
 
       // now move spindle to the holder position
       // first to safetyHeight ...
       var cmd = '';
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
+      cmd += "G4 P1\n"; // wait a second
       // then to holder center ...
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
+      cmd += "G4 P1\n"; // wait a second
       // then to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
+      cmd += "G4 P1\n"; // wait a second
       // slowly to the minus end ollet Z position  ...
       cmd += "G0 Z" + nutZ + " F" + atcparams.feedRate + "\n";
       cmd += "G4 P1\n"; // wait a second
@@ -298,7 +255,7 @@ var myXTCMacro = {
       var cmd = "send " + this.serialPortXTC + " " 
                   + "fwd " + (speed+100) + "\n" 
                   + "fwd " + speed + "\n" 
-                  + "lev " + level + "\n";
+                  + "lev " + 1000 + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
       console.log('ATC spindle', cmd);
    },
@@ -344,13 +301,14 @@ var myXTCMacro = {
    unpauseGcode: function(art) {
       console.log('ATC called: ', 'unpauseGcode', art);
 
+      /*
       if(art === 'unscrew' && this.toolnumber > 0){
          // Ok, put the last tool in holder now we get the next one
          this.onATC({toolnumber: this.toolnumber});
          return;
       }
-
-      chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", "");
+      */
+      chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
    },
 };
 // call init from cp 
