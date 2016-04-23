@@ -184,7 +184,7 @@ var myXTCMacro = {
 
       // Prepare event looseCollet ---------------------------------------------
       var looseCollet = $.Deferred();
-      var looseColletZPos = atcparams.nutZ+2;
+      var looseColletZPos = atcparams.nutZ+1;
 
       // add a rule if looseCollet event happend after startSpindleSlow
       $.when( looseCollet )
@@ -258,12 +258,13 @@ var myXTCMacro = {
                   + "fwd " + speed + "\n"; 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
+/*
       cmd = "send " + this.serialPortXTC + " "
-                  + "lev " + level + "\n";
+                  + "lev " + 900 + "\n";
       setTimeout(function(){
          chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
       }, 100);
-
+*/
       console.log('ATC spindle', cmd);
    },
 
@@ -291,7 +292,8 @@ var myXTCMacro = {
       // unscrew process
       // rotate backward with more power(+50) as the tight process    
       var cmd = "send " + this.serialPortXTC + " " 
-         + "bwd " + (holder.tourque+50) + " " + holder.time + "\n";  
+         + "bwd " + 400 + " " + 30 + "\n";
+         //+ "lev " + -2000 + "\n";  
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // unset tool in use
@@ -303,9 +305,9 @@ var myXTCMacro = {
       console.log('ATC called: ', 'atc_screw');
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
-      // tighten process
+      // tighten process (TODO: use level)
       var cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd " + holder.tourque + " " + holder.time + "\n";
+                  + "fwd " + 300 + " " + 50 + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // set tool in use
