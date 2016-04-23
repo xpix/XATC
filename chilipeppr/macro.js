@@ -252,9 +252,13 @@ var myXTCMacro = {
    startSpindle: function(speed, level){
       var cmd = "send " + this.serialPortXTC + " " 
                   + "fwd " + (speed+100) + "\n" 
-                  + "fwd " + speed + "\n" 
-                  + "lev " + 1000 + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+
+      cmd = "send " + this.serialPortXTC + " "
+                  + "fwd " + speed + "\n" 
+                  + "lev " + level + "\n";
+      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+
       console.log('ATC spindle', cmd);
    },
 
