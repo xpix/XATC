@@ -245,7 +245,7 @@ var myXTCMacro = {
       cmd += "G0 Z" + holder.posZ + "\n";
       // slowly to the minus end ollet Z position  ...
       cmd += "G0 Z" + nutZ + " F" + atcparams.feedRate + "\n";
-      cmd += "G4 P0.5\n"; // wait a second
+      cmd += "G4 P2\n"; // wait some second's
       // move to event position for safetyHeight 
       cmd += "G0 Z" + unpausedZPos + "\n";   
       
