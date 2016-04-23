@@ -98,8 +98,11 @@ var myXTCMacro = {
       this.State = state;
    },
 	onChiliPepprPauseOnExecute: function(data) {
-		console.log("got onChiliPepprPauseOnExecute. data:", data);
-		this.onATC({toolnumber: 1});
+		console.log("ATC onChiliPepprPauseOnExecute. data:", data);
+		if(data.gcode.match(/XTC\s+T(\d+)/)){
+          var toolnumber = parseInt(RegExp.$1, 10);
+		  this.onATC({toolnumber: toolnumber});
+		}
 	},
    updateAxesFromStatus: function (axes) {
       if ('x' in axes && axes.x !== null) {
@@ -251,13 +254,15 @@ var myXTCMacro = {
 
    startSpindle: function(speed, level){
       var cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd " + (speed+100) + "\n" 
+                  + "fwd 400\n" 
+                  + "fwd " + speed + "\n"; 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       cmd = "send " + this.serialPortXTC + " "
-                  + "fwd " + speed + "\n" 
                   + "lev " + level + "\n";
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      setTimeout(function(){
+         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      }, 100);
 
       console.log('ATC spindle', cmd);
    },
@@ -310,13 +315,11 @@ var myXTCMacro = {
    unpauseGcode: function(art) {
       console.log('ATC called: ', 'unpauseGcode', art);
 
-      /*
       if(art === 'unscrew' && this.toolnumber > 0){
          // Ok, put the last tool in holder now we get the next one
          this.onATC({toolnumber: this.toolnumber});
          return;
       }
-      */
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
    },
 };
