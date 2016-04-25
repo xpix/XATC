@@ -292,8 +292,7 @@ var myXTCMacro = {
       // unscrew process
       // rotate backward with more power(+50) as the tight process    
       var cmd = "send " + this.serialPortXTC + " " 
-         + "bwd " + 400 + " " + 30 + "\n";
-         //+ "lev " + -2000 + "\n";  
+         + "unscrew 400  " + this.atcParameters.revlevel + " " + holder.time + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // unset tool in use
@@ -307,7 +306,7 @@ var myXTCMacro = {
       
       // tighten process (TODO: use level)
       var cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd " + 300 + " " + 50 + "\n";
+                  + "screw " + holder.tourque + " " + holder.time + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // set tool in use
