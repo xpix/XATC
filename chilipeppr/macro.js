@@ -143,8 +143,13 @@ var myXTCMacro = {
       this.toolnumber = data.toolnumber;
       this.events = [];
 
+      // check if the same tool in use
+      if(this.toolinuse > 0 && this.toolnumber == this.toolinuse){
+         console.log('ATC same tool number: ignored', this);
+         return;
+      } 
       // check if a different tool in use
-      if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
+      else if(this.toolinuse > 0 && this.toolinuse != this.toolnumber){
          this.atc_move_to_holder(this.toolinuse, 'unscrew'); // move to holder and unscrew
       } 
       else if(this.toolnumber > 0){
