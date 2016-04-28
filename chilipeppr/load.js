@@ -5,7 +5,7 @@
 
 var mxtc = window["myXTCMacro"];
 if(! mxtc){
-  $.getScript( "//rawgit.com/xpix/XTC/master/chilipeppr/macro.js", 
+  $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/macro.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load XATC macro was performed.", data );
       setXTCParams(mxtc);
@@ -48,7 +48,7 @@ function setXTCParams(macro){
 
 var mspc = window["SpindleControlMacro"];
 if(! mspc){
-  $.getScript( "//rawgit.com/xpix/XTC/master/chilipeppr/spindle.js", 
+  $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/spindle.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load Spindle controller was performed.", data );
       setXTCParams(mspc);

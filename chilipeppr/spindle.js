@@ -16,6 +16,9 @@ var SpindleControlMacro = {
 		chilipeppr.subscribe("/com-chilipeppr-widget-serialport/onComplete", this, this.onComplete);
 		// store macro in window object so we have it next time thru
 		window["SpindleControlMacro"] = this;
+
+        chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "Spindle DC Controller", "Send commands to spindle dc controller");
+
 		this.getGcode();
 	},
 	uninit: function() {
