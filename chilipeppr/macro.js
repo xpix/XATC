@@ -138,6 +138,7 @@ var myXTCMacro = {
       // and we can do whatever we like :)
       console.log('ATC Process:', this);
 
+      // first stop spindle
       this.stopSpindle();
 
       this.toolnumber = data.toolnumber;
@@ -258,19 +259,17 @@ var myXTCMacro = {
    },
 
    startSpindle: function(speed, level){
-      var cmd = "send " + this.serialPortXTC + " " 
+      var cmd = '';
+      cmd = "send " + this.serialPortXTC + " " 
                   + "fwd 400\n" 
                   + "fwd " + speed + "\n"; 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-
-/*
-      cmd = "send " + this.serialPortXTC + " "
-                  + "lev " + 900 + "\n";
-      setTimeout(function(){
-         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-      }, 100);
-*/
       console.log('ATC spindle', cmd);
+
+      cmd = "send " + this.serialPortXTC + " " 
+                  + "lev " + level + "\n"; 
+      if(level > 0)
+         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
    },
 
    stopSpindle: function(){
@@ -327,6 +326,8 @@ var myXTCMacro = {
          return;
       }
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
+
+      this.startSpindle(400, 0); // Restart spindle
    },
 };
 // call init from cp 
