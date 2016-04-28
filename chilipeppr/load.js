@@ -1,8 +1,28 @@
 /* global macro chilipeppr $ */
 // get external js macro one times and run it
 
-/* -----------Automatic Toolchanger Macro ----------------------------------- */
 
+/* ------------Spindle DC Controller Macro ---------------------------------- */
+var mspc = window["SpindleControlMacro"];
+if(! mspc){
+  $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/spindle.js", 
+    function( data, textStatus, jqxhr ) {
+      console.log( "Load Spindle controller was performed.", data );
+      setSPCParams(mspc);
+    });
+}
+else {
+  setSPCParams(mspc);
+}
+
+function setSPCParams(macro){
+  // here you can set your Parameters
+  macro.serialPortXTC = '/dev/ttyUSB2';
+
+  macro.init(); // start macro
+}
+
+/* -----------Automatic Toolchanger Macro ----------------------------------- */
 var mxtc = window["myXTCMacro"];
 if(! mxtc){
   $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/macro.js", 
@@ -43,26 +63,3 @@ function setXTCParams(macro){
   
   macro.init(); // start macro
 }
-
-/* ------------Spindle DC Controller Macro ---------------------------------- */
-
-var mspc = window["SpindleControlMacro"];
-if(! mspc){
-  $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/spindle.js", 
-    function( data, textStatus, jqxhr ) {
-      console.log( "Load Spindle controller was performed.", data );
-      setXTCParams(mspc);
-    });
-}
-else {
-  setSPCParams(mspc);
-}
-
-function setSPCParams(macro){
-  // here you can set your Parameters
-  macro.serialPortXTC = '/dev/ttyUSB2';
-
-  macro.init(); // start macro
-}
-
-
