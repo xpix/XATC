@@ -8,6 +8,7 @@ if(! mspc){
   $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/spindle.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load Spindle controller was performed.", data );
+      mspc = window["SpindleControlMacro"];
       setSPCParams(mspc);
     });
 }
@@ -28,6 +29,7 @@ if(! mxtc){
   $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/macro.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load XATC macro was performed.", data );
+      mxtc = window["myXTCMacro"];
       setXTCParams(mxtc);
     });
 }
