@@ -1,20 +1,25 @@
+/* global macro chilipeppr $ */
 // get external js macro one times and run it
-var e = window["myXTCMacro"];
-if(! e){
-  $.getScript( "//rawgit.com/xpix/XTC/master/chilipeppr/macro.js", function( data, textStatus, jqxhr ) {
-    console.log( "Load was performed.", data );
-    setParams(e);
-  });
+
+/* -----------Automatic Toolchanger Macro ----------------------------------- */
+
+var mxtc = window["myXTCMacro"];
+if(! mxtc){
+  $.getScript( "//rawgit.com/xpix/XTC/master/chilipeppr/macro.js", 
+    function( data, textStatus, jqxhr ) {
+      console.log( "Load XATC macro was performed.", data );
+      setXTCParams(mxtc);
+    });
 }
 else {
-  setParams(e);
+  setXTCParams(mxtc);
 }
 
-function setParams(e){
+function setXTCParams(macro){
   // here you can set your Parameters
-  e.serialPortXTC = '/dev/ttyUSB2';
+  macro.serialPortXTC = '/dev/ttyUSB2';
   
-  e.atcParameters = {
+  macro.atcParameters = {
       level:   900,     // the current level in mA where the spindle will break
       revlevel:-3000,   // the reverse level in mA where the spindle will break
       forward: 30,      // value for minimum rpm
@@ -24,7 +29,7 @@ function setParams(e){
   };
   
   // Where your tool holders?
-  e.atcMillHolder = [
+  macro.atcMillHolder = [
       /* 
        Center Position holder, 
        |                       |catch height, 
@@ -36,5 +41,28 @@ function setParams(e){
       {posX : -250, posY : 75, posZ: 5,     tourque: 300, time: 500}, // 3. endmill holder
   ];
   
-  e.init(); // start macro
+  macro.init(); // start macro
 }
+
+/* ------------Spindle DC Controller Macro ---------------------------------- */
+
+var mspc = window["SpindleControlMacro"];
+if(! mspc){
+  $.getScript( "//rawgit.com/xpix/XTC/master/chilipeppr/spindle.js", 
+    function( data, textStatus, jqxhr ) {
+      console.log( "Load Spindle controller was performed.", data );
+      setXTCParams(mspc);
+    });
+}
+else {
+  setSPCParams(mspc);
+}
+
+function setSPCParams(macro){
+  // here you can set your Parameters
+  macro.serialPortXTC = '/dev/ttyUSB2';
+
+  macro.init(); // start macro
+}
+
+
