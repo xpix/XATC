@@ -165,9 +165,10 @@ var myXTCMacro = {
       this.obj3dmeta.widget.wakeAnimate();
    },
    sceneRemove: function () {
-      if (this.mySceneGroup != null)
-          this.obj3d.remove(this.mySceneGroup);
-      this.obj3dmeta.widget.wakeAnimate();
+      if (this.mySceneGroup != null){
+         this.obj3d.remove(this.mySceneGroup);
+         this.obj3dmeta.widget.wakeAnimate();
+      }
    },
 
    drawHolders: function(blength, bwidth) {
