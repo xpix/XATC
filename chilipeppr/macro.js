@@ -174,7 +174,7 @@ var myXTCMacro = {
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.LineBasicMaterial({
-			color: 0xffffff,
+			color: 0x3333AA,
 			transparent: true,
 			opacity: 0.5
       });
