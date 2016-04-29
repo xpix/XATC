@@ -174,7 +174,7 @@ var myXTCMacro = {
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.LineBasicMaterial({
-        color: 0x777777
+        color: 0xAAAAAA
       });
    
       var that = this;
@@ -186,6 +186,8 @@ var myXTCMacro = {
              holder.posY,
              holder.posZ
          );
+         mesh.rotateX(Math.PI / 2); // 90 degrees
+
          that.sceneAdd( mesh );   
       });
    },
