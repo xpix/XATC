@@ -91,7 +91,7 @@ var myXTCMacro = {
       this.get3dObj(function() {
           // when we get here, we've got the 3d obj 
           console.log('ATC 3dobj loading');
-          this.drawHolder();
+          this.drawHolders();
       });
    },
    uninit: function() {
@@ -99,7 +99,7 @@ var myXTCMacro = {
 	   chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
-      this.removeHolder();
+      this.sceneRemove();
    },
    onStateChanged: function(state){
       console.log('ATC State:', state, this);
@@ -164,9 +164,9 @@ var myXTCMacro = {
       // it sleeps automatically after 5 seconds to convserve CPU
       this.obj3dmeta.widget.wakeAnimate();
    },
-   sceneRemove: function (obj) {
+   sceneRemove: function () {
       if (this.mySceneGroup != null)
-          this.mySceneGroup.remove(obj);
+          this.obj3d.remove(this.mySceneGroup);
       this.obj3dmeta.widget.wakeAnimate();
    },
 
