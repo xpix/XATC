@@ -1,4 +1,4 @@
-/* global macro chilipeppr $ */
+/* global macro chilipeppr THREE $ */
 /* 
 
 ============ MACRO XTC (Automatic Tool Changer) ================================
@@ -86,12 +86,20 @@ var myXTCMacro = {
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
+
+      // first thing we need to do is get 3d obj
+      this.get3dObj(function() {
+          // when we get here, we've got the 3d obj 
+          console.log('ATC 3dobj loading');
+          this.drawHolder();
+      });
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
-	  chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
+	   chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
+      this.removeHolder();
    },
    onStateChanged: function(state){
       console.log('ATC State:', state, this);
@@ -126,6 +134,56 @@ var myXTCMacro = {
             entry.event.resolve();                                // Fire up the event
             console.log('ATC fire Event: ', entry.comment);
          }
+      });
+   },
+   get3dObj: function (callback) {
+      this.userCallbackForGet3dObj = callback;
+      chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/recv3dObject", this, this.get3dObjCallback);
+      chilipeppr.publish("/com-chilipeppr-widget-3dviewer/request3dObject", "");
+      chilipeppr.unsubscribe("/com-chilipeppr-widget-3dviewer/recv3dObject", this.get3dObjCallback);
+   },
+   get3dObjCallback: function (data, meta) {
+      console.log("ATC got 3d obj:", data, meta);
+      this.obj3d = data;
+      this.obj3dmeta = meta;
+      if (this.userCallbackForGet3dObj) {
+          this.userCallbackForGet3dObj();
+          this.userCallbackForGet3dObj = null;
+      }
+   },
+   mySceneGroup: null,
+   sceneAdd: function (obj) {
+      // let's add our Eagle BRD content outside the scope of the Gcode content
+      // so that we have it stay while the Gcode 3D Viewer still functions
+      if (this.mySceneGroup == null) {
+          this.mySceneGroup = new THREE.Group();
+          this.obj3d.add(this.mySceneGroup);
+      }
+      this.mySceneGroup.add(obj);
+      // you need to wake up the 3d viewer to see your changes
+      // it sleeps automatically after 5 seconds to convserve CPU
+      this.obj3dmeta.widget.wakeAnimate();
+   },
+   sceneRemove: function (obj) {
+      if (this.mySceneGroup != null)
+          this.mySceneGroup.remove(obj);
+      this.obj3dmeta.widget.wakeAnimate();
+   },
+
+   drawHolders: function(blength, bwidth) {
+
+      var material = new THREE.LineBasicMaterial({
+        color: 0x777777
+      });
+   
+      var that = this;
+      this.atcMillHolder.forEach(function(holder){
+         var geometry = new THREE.CylinderGeometry(25,25,50,6).position.set( 
+             holder.posX,
+             holder.posY,
+             holder.posZ
+         );
+         that.sceneAdd(new THREE.Mesh( geometry, material ));   
       });
    },
 
