@@ -179,12 +179,14 @@ var myXTCMacro = {
    
       var that = this;
       this.atcMillHolder.forEach(function(holder){
-         var geometry = new THREE.CylinderGeometry(25,25,50,6).position.set( 
+         var geometry = new THREE.CylinderGeometry(25,25,50,6);
+         var mesh = new THREE.Mesh( geometry, material );
+         mesh.position.set( 
              holder.posX,
              holder.posY,
              holder.posZ
          );
-         that.sceneAdd(new THREE.Mesh( geometry, material ));   
+         that.sceneAdd( mesh );   
       });
    },
 
