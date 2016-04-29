@@ -181,7 +181,7 @@ var myXTCMacro = {
    
       var that = this;
       this.atcMillHolder.forEach(function(holder){
-         var geometry = new THREE.CylinderGeometry(17,17,50,6);
+         var geometry = new THREE.CylinderGeometry(8.5,8.5,50,6);
          var mesh = new THREE.Mesh( geometry, material );
          mesh.position.set( 
              holder.posX,
