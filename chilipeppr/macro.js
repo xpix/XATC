@@ -174,17 +174,19 @@ var myXTCMacro = {
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.LineBasicMaterial({
-        color: 0xAAAAAA
+			color: 0xffffff,
+			transparent: true,
+			opacity: 0.5
       });
    
       var that = this;
       this.atcMillHolder.forEach(function(holder){
-         var geometry = new THREE.CylinderGeometry(25,25,50,6);
+         var geometry = new THREE.CylinderGeometry(17,17,50,6);
          var mesh = new THREE.Mesh( geometry, material );
          mesh.position.set( 
              holder.posX,
              holder.posY,
-             holder.posZ
+             (-50 + holder.posZ)
          );
          mesh.rotateX(Math.PI / 2); // 90 degrees
 
