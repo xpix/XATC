@@ -174,7 +174,7 @@ var myXTCMacro = {
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.MeshBasicMaterial({
-			color: 0x3333AA,
+			color: 0xAAAADD,
          wireframe: true,
 			opacity: 0.5
       });
