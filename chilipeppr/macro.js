@@ -48,20 +48,31 @@ if (!Array.prototype.last)
     };
 
 var myXTCMacro = {
-      serialPortXTC:    "/dev/ttyUSB2", // XTC Controlelr
-      atcParameters: {
+   serialPortXTC:    "/dev/ttyUSB2",   // XTC Controler
+   addressServo:     "127.0.0.1",      // Networkaddress of Servoc ESP8266 Controller
+   atcParameters: {
          level:   800,     // the current level in mA where the spindle will break
          revlevel:-3000,   // the reverse level in mA where the spindle will break
          forward: 30,      // value for minimum rpm
          safetyHeight: 35, // safety height
          feedRate: 300,    // Feedrate to move over the catch cable
          nutZ: -7,         // safety deep position of collet in nut
-    },
-    atcMillHolder: [
-      // Center Position holder, catch height, tighten value, how long tighten in milliseconds
-      // ---------|-------------|-------------|--------------------------------
-      {posX : -235, posY : 26.5,   posZ: 5,   tourque: 300, time: 500}, // first endmill holder
-    ],
+   },
+   carousel:{
+      enabled: true,
+      center:{ x:-200, y:15, r:45 },  // center of carousel and radius of the diameter center circle
+      servo: { block:120, unblock:1}, // position values are in degress
+      torqueDegrees: 90,              // maximum arc degrees to torque collet
+   },
+   atcMillHolder: [
+      // Center Position holder, catch height, tighten val, tighten ms,    deg
+      // ---------------|-------------|-------------|-------------|---------|------
+      {posX : -155.00,  posY : 15.0,   posZ: 5,   tourque: 300, time: 500, deg: 0},     // first endmill holder
+      {posX : -168.18,  posY : -16.82, posZ: 5,   tourque: 300, time: 500, deg: 45},    // second endmill holder
+      {posX : -200.00,  posY : -30.00, posZ: 5,   tourque: 300, time: 500, deg: 90},    // third endmill holder
+      {posX : -231.82,  posY : -16.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // forth endmill holder
+      // etc.pp
+   ],
    feedRate: 100,
    toolnumber: 0,
 	toolinuse: 0,
@@ -308,21 +319,114 @@ var myXTCMacro = {
       // now move spindle to the holder position
       // first to safetyHeight ...
       var cmd = '';
+
+      // move Z to safety height
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
-      // then to holder center ...
+
+      // move to XY holder center ...
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
-      cmd += "G4 P0.5\n"; // wait a second
-      // then to holder Z pre-position height ...
+      cmd += "G4 P0.5\n"; // wait for start spindle slow
+
+      // move to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
-      // slowly to the minus end ollet Z position  ...
-      cmd += "G0 Z" + nutZ + " F" + atcparams.feedRate + "\n";
-      cmd += "G4 P2\n"; // wait some second's
-      // move to event position for safetyHeight 
+
+      // move slowly to the minus end collet Z position  ...
+      cmd += "G1 Z" + nutZ + " F" + atcparams.feedRate + "\n";
+      cmd += "G4 P2\n"; // wait some second's for screw/unscrew event
+
+      // Add gcode and events for the XATC carousel
+      cmd += this.torqueMove(nutZ, looseColletZPos,holder, atcparams);
+
+      // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
       
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
 
+   torqueMove: function(nutZ, looseColletZPos, holder, atcparams){
+      if(! this.carousel.enabled) 
+         return '';
+
+      var cmd = '';
+
+      // Move to Z-zero + x
+      var startSpindleSlowZPos = 0.3;
+      cmd += "G1 Z" + startSpindleSlowZPos + "\n";
+      cmd += "G4 P1\n"; // wait some second's for start rotate spindle
+
+      var startSpindleSlow = $.Deferred();
+      $.when( startSpindleSlow )
+         .done( this.startSpindle.bind(this, atcparams.forward, atcparams.level) );
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
+         event: startSpindleSlow,
+         comment: 'Start spindle slow for blocking.',
+      });
+      
+      // block spindle via servo
+      var startBlocker = $.Deferred();
+      $.when( startSpindleSlow, startBlocker )
+         .done( this.servo.bind(this, this.carousel.servo.block) );
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
+         event: startBlocker,
+         comment: 'Move servo to block spindle shaft.',
+      });
+      
+      // move to nutZ+x cuz no tighten in this moment
+      cmd += "G1 Z" + (nutZ+0.2) + "\n"; 
+      
+      // move an torqueDegrees(°) arc CW
+      var theta1   = holder.deg;
+      var theta2   = holder.deg + this.carousel.torqueDegrees;
+      var darc = this.arc(theta1, theta2);
+      cmd += "G2 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
+      cmd += "G4 P1\n";
+      
+      // deblock spindle
+      var deBlocker = $.Deferred();
+      $.when( startSpindleSlow, startBlocker, deBlocker )
+         .done( this.servo.bind(this, this.carousel.servo.unblock) );
+      this.events.push({ x:darc.XEnd,  y:darc.YEnd,  z:startSpindleSlowZPos,
+         event: deBlocker,
+         comment: 'Move servo to deblock spindle shaft.',
+      });
+
+      
+      // move an ~90° arc CCW, back to original position
+      theta1   = holder.deg + this.carousel.torqueDegrees;
+      theta2   = holder.deg;
+      darc = this.arc(theta1, theta2);
+      cmd += "G3 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
+
+      // move to looseCollet position and make a beak to unscrew complete
+      cmd += "G1 Z " + looseColletZPos + "\n";
+      cmd += "G4 P1\n";
+      
+      return cmd;
+
+   },
+   
+   arc:function(theta1, theta2){
+      if(theta2 > 360) theta2 =- 360; 
+
+      var carousel = this.carousel.center;
+      // calculate the arc move, from center of carousel
+      // http://www.instructables.com/id/How-to-program-arcs-and-linear-movement-in-G-Code-/?ALLSTEPS
+      var xe   = (carousel.x+(carousel.r*Math.cos(theta2))).toFixed(2);              // Xc+(R*cos(Theta2))
+      var ye   = (carousel.y+(carousel.r*Math.sin(theta2))).toFixed(2);              // Yc+(R*sin(Theta2))
+      var i    = ((carousel.x-(carousel.r*Math.cos(theta1)))-carousel.x).toFixed(2); // (Xc-(R*cos(Theta1)))-Xc   
+      var j    = ((carousel.y-(carousel.r*Math.sin(theta1)))-carousel.y).toFixed(2); // (Yc-(R*sin(Theta1)))-Yc   
+
+      return {XEnd: xe, YEnd: ye, I: i, J: j};      
+   },
+
+   
+   servo: function(pos){
+      $.get( this.addressServo + '/servo', { value: pos } )
+         .done(function( data ) {
+            console.log('ATC Servo get called', data);
+         });
+   },
+   
    startSpindle: function(speed, level){
       var cmd = '';
       cmd = "send " + this.serialPortXTC + " " 
