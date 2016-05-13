@@ -60,17 +60,21 @@ var myXTCMacro = {
    },
    carousel:{
       enabled: true,
-      center:{ x:-200, y:15, r:45 },  // center of carousel and radius of the diameter center circle
+      center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
       servo: { block:120, unblock:1}, // position values are in degress
       torqueDegrees: 90,              // maximum arc degrees to torque collet
    },
    atcMillHolder: [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
-      {posX : -155.00,  posY : 15.0,   posZ: 5,   tourque: 300, time: 500, deg: 0},     // first endmill holder
-      {posX : -168.18,  posY : -16.82, posZ: 5,   tourque: 300, time: 500, deg: 45},    // second endmill holder
-      {posX : -200.00,  posY : -30.00, posZ: 5,   tourque: 300, time: 500, deg: 90},    // third endmill holder
-      {posX : -231.82,  posY : -16.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // forth endmill holder
+      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 0},     // first endmill holder
+      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},    // second endmill holder
+      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},    // third endmill holder
+      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // forth endmill holder
+      {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
+      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // 6. endmill holder
+      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},   // 7. endmill holder
+      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 7. endmill holder
       // etc.pp
    ],
    feedRate: 100,
@@ -318,7 +322,11 @@ var myXTCMacro = {
 
       // now move spindle to the holder position
       // first to safetyHeight ...
-      var cmd = '';
+      // change to temporary carousel coordinaten system
+      var cmd = 'G92 X' + this.carousel.center.x 
+                  + ' Y' + this.carousel.y 
+                  + ' Y' + this.carousel.z
+                  + "\n";
 
       // move Z to safety height
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
@@ -339,6 +347,8 @@ var myXTCMacro = {
 
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
+
+      cmd += "G0 53\n";   
       
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
@@ -378,7 +388,7 @@ var myXTCMacro = {
       var theta1   = holder.deg;
       var theta2   = holder.deg + this.carousel.torqueDegrees;
       var darc = this.arc(theta1, theta2);
-      cmd += "G2 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
+      cmd += "G17 G2 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
       cmd += "G4 P1\n";
       
       // deblock spindle
@@ -395,7 +405,7 @@ var myXTCMacro = {
       theta1   = holder.deg + this.carousel.torqueDegrees;
       theta2   = holder.deg;
       darc = this.arc(theta1, theta2);
-      cmd += "G3 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
+      cmd += "G17 G3 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
 
       // move to looseCollet position and make a beak to unscrew complete
       cmd += "G1 Z " + looseColletZPos + "\n";
