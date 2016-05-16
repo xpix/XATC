@@ -387,7 +387,7 @@ var myXTCMacro = {
       var theta1   = holder.deg;
       var theta2   = holder.deg + this.carousel.torqueDegrees;
       var darc = this.arc(theta1, theta2);
-      cmd += "G17 G2 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
+      cmd += "G17 G3 X" + darc.XEnd + " Y" + darc.YEnd +  " R" + this.carousel.center.r + "\n";
       cmd += "G4 P1\n";
       
       // deblock spindle
@@ -404,7 +404,7 @@ var myXTCMacro = {
       theta1   = holder.deg + this.carousel.torqueDegrees;
       theta2   = holder.deg;
       darc = this.arc(theta1, theta2);
-      cmd += "G17 G3 X" + darc.XEnd + " Y" + darc.YEnd +  " I" + darc.I + " J" + darc.J + "\n";
+      cmd += "G17 G2 X" + darc.XEnd + " Y" + darc.YEnd + " R" + this.carousel.center.r + "\n";
 
       // move to looseCollet position and make a beak to unscrew complete
       cmd += "G1 Z " + looseColletZPos + "\n";
