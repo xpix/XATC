@@ -346,8 +346,8 @@ var myXTCMacro = {
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
 
-      // change to machine Coordinaten system
-      cmd += "G53\n";   
+      // change to original machine Coordinaten system
+      cmd += "G54\n";   
       
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
@@ -430,7 +430,7 @@ var myXTCMacro = {
 
    
    servo: function(pos){
-      $.get( this.addressServo + '/servo', { value: pos } )
+      $.get( 'http://' + this.addressServo + '/servo', { value: pos } )
          .done(function( data ) {
             console.log('ATC Servo get called', data);
          });
