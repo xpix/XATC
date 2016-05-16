@@ -79,10 +79,10 @@ var myXTCMacro = {
    ],
    feedRate: 100,
    toolnumber: 0,
-	toolinuse: 0,
+   toolinuse: 0,
    axis: {x:0, y:0, z:0},
    events: [],
-	init: function() {
+   init: function() {
       // Uninit previous runs to unsubscribe correctly, i.e.
       // so we don't subscribe 100's of times each time we modify
       // and run this macro
@@ -96,7 +96,7 @@ var myXTCMacro = {
       window["myXTCMacro"] = this;
 
       // Check for Automatic Toolchange Command
-	   chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
+      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       
@@ -111,7 +111,7 @@ var myXTCMacro = {
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
-	   chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
+      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       this.sceneRemove();
@@ -120,13 +120,13 @@ var myXTCMacro = {
       console.log('ATC State:', state, this);
       this.State = state;
    },
-	onChiliPepprPauseOnExecute: function(data) {
-		console.log("ATC onChiliPepprPauseOnExecute. data:", data);
-		if(data.gcode.match(/XTC\s+T(\d+)/)){
+   onChiliPepprPauseOnExecute: function(data) {
+      console.log("ATC onChiliPepprPauseOnExecute. data:", data);
+      if(data.gcode.match(/XTC\s+T(\d+)/)){
           var toolnumber = parseInt(RegExp.$1, 10);
-		  this.onATC({toolnumber: toolnumber});
-		}
-	},
+        this.onATC({toolnumber: toolnumber});
+      }
+   },
    updateAxesFromStatus: function (axes) {
       if ('x' in axes && axes.x !== null) {
           this.axis.x = (Math.round( axes.x * 10 )/10 );
@@ -145,7 +145,7 @@ var myXTCMacro = {
       // then fire up the planned event
       this.events.forEach(function(entry){
          if(entry.event.state() != 'resolved' && entry.x == that.axis.x && entry.y == that.axis.y && entry.z == that.axis.z){
-      		console.log("ATC updateAxesFromStatus:", that.axis);
+            console.log("ATC updateAxesFromStatus:", that.axis);
             entry.event.resolve();                                // Fire up the event
             console.log('ATC fire Event: ', entry.comment);
          }
@@ -189,9 +189,9 @@ var myXTCMacro = {
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.MeshBasicMaterial({
-			color: 0xAAAADD,
+         color: 0xAAAADD,
          wireframe: true,
-			opacity: 0.5
+         opacity: 0.5
       });
    
       var that = this;
@@ -235,7 +235,7 @@ var myXTCMacro = {
       } 
       else if(this.toolnumber > 0){
          // get new tool from holder, if neccessary
-   	   this.atc_move_to_holder(this.toolnumber, 'screw'); // move to holder and screw
+         this.atc_move_to_holder(this.toolnumber, 'screw'); // move to holder and screw
       }
    },
 
