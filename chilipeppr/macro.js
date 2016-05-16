@@ -325,8 +325,8 @@ var myXTCMacro = {
       // first to safetyHeight ...
       // change to temporary carousel coordinaten system
       var cmd = 'G92 X' + this.carousel.center.x 
-                  + ' Y' + this.carousel.y 
-                  + ' Y' + this.carousel.z
+                  + ' Y' + this.carousel.center.y 
+                  + ' Z' + this.carousel.center.z
                   + "\n";
 
       // move Z to safety height
