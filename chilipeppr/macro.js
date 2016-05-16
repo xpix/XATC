@@ -323,11 +323,8 @@ var myXTCMacro = {
 
       // now move spindle to the holder position
       // first to safetyHeight ...
-      // change to temporary carousel coordinaten system
-      var cmd = 'G92 X' + this.carousel.center.x 
-                  + ' Y' + this.carousel.center.y 
-                  + ' Z' + this.carousel.center.z
-                  + "\n";
+      // change to G59 coordinaten system
+      var cmd = 'G59' + "\n";
 
       // move Z to safety height
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
@@ -349,7 +346,8 @@ var myXTCMacro = {
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
 
-      cmd += "G0 53\n";   
+      // change to machine Coordinaten system
+      cmd += "G53\n";   
       
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
