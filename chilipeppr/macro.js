@@ -199,8 +199,8 @@ var myXTCMacro = {
          var geometry = new THREE.CylinderGeometry(8.5,8.5,50,6);
          var mesh = new THREE.Mesh( geometry, material );
          mesh.position.set( 
-             holder.posX,
-             holder.posY,
+             (that.carousel.center.x + holder.posX),
+             (that.carousel.center.x + holder.posY),
              (-50 + holder.posZ)
          );
          mesh.rotateX(Math.PI / 2); // 90 degrees
