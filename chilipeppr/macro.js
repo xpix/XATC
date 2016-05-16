@@ -97,8 +97,8 @@ var myXTCMacro = {
       // Check for Automatic Toolchange Command
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
-      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
-      
+      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete ", this, this.onChiliPepprPauseOnComplete );
+
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
 
       // first thing we need to do is get 3d obj
@@ -113,15 +113,15 @@ var myXTCMacro = {
       macro.status("Uninitting chilipeppr_pause macro.");
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
-      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
+      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete ", this, this.onChiliPepprPauseOnComplete );
       this.sceneRemove();
    },
    onStateChanged: function(state){
       console.log('ATC State:', state, this);
       this.State = state;
    },
-   onChiliPepprPauseOnExecute: function(data) {
-      console.log("ATC onChiliPepprPauseOnExecute. data:", data);
+   onChiliPepprPauseOnComplete : function(data) {
+      console.log("ATC onChiliPepprPauseOnComplete . data:", data);
       if(data.gcode.match(/XTC\s+T(\d+)/)){
           var toolnumber = parseInt(RegExp.$1, 10);
         this.onATC({toolnumber: toolnumber});
