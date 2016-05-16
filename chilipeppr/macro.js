@@ -89,16 +89,15 @@ var myXTCMacro = {
       if (window["myXTCMacro"]) {
          macro.status("This macro was run before. Cleaning up...");
          window["myXTCMacro"].uninit();
-         window["myXTCMacro"] = undefined;
       }
 
       // store macro in window object so we have it next time thru
       window["myXTCMacro"] = this;
 
       // Check for Automatic Toolchange Command
-      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
+      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
 
@@ -106,14 +105,15 @@ var myXTCMacro = {
       this.get3dObj(function() {
           // when we get here, we've got the 3d obj 
           console.log('ATC 3dobj loading');
+         // TODO: drawHolders again after gcode load
           this.drawHolders();
       });
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
-      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
+      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnExecute);
       this.sceneRemove();
    },
    onStateChanged: function(state){
@@ -128,6 +128,7 @@ var myXTCMacro = {
       }
    },
    updateAxesFromStatus: function (axes) {
+      console.log("ATC updateAxesFromStatus. data:", axes);
       if ('x' in axes && axes.x !== null) {
           this.axis.x = (Math.round( axes.x * 10 )/10 );
       }
