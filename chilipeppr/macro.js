@@ -324,7 +324,7 @@ var myXTCMacro = {
       // now move spindle to the holder position
       // first to safetyHeight ...
       // change to G59 coordinaten system
-      var cmd = 'G59' + "\n";
+      var cmd = "G59\n";
 
       // move Z to safety height
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
@@ -430,7 +430,7 @@ var myXTCMacro = {
 
    
    servo: function(pos){
-      $.get( 'http://' + this.addressServo + '/servo', { value: pos } )
+      $.get( 'http://' +this.addressServo +'/servo', { value: pos } )
          .done(function( data ) {
             console.log('ATC Servo get called', data);
          });

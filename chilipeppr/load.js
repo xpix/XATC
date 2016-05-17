@@ -5,7 +5,7 @@
 /* ------------Spindle DC Controller Macro ---------------------------------- */
 var mspc = window["SpindleControlMacro"];
 if(! mspc){
-  $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/spindle.js", 
+  $.getScript( "http://rawgit.com/xpix/XTC/master/chilipeppr/macro.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load Spindle controller was performed.", data );
       mspc = window["SpindleControlMacro"];
@@ -18,7 +18,7 @@ else {
 
 function setSPCParams(macro){
   // here you can set your Parameters
-  macro.serialPortXTC = '/dev/ttyUSB2';
+  macro.serialPortXTC = '/dev/ttyUSB1';
 
   macro.init(); // start macro
 }
@@ -26,7 +26,7 @@ function setSPCParams(macro){
 /* -----------Automatic Toolchanger Macro ----------------------------------- */
 var mxtc = window["myXTCMacro"];
 if(! mxtc){
-  $.getScript( "http://chilipeppr.com/slingshot?url=https://cdn.rawgit.com/xpix/XATC/master/chilipeppr/macro.js", 
+  $.getScript( "http://rawgit.com/xpix/XTC/master/chilipeppr/macro.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load XATC macro was performed.", data );
       mxtc = window["myXTCMacro"];
@@ -39,29 +39,35 @@ else {
 
 function setXTCParams(macro){
   // here you can set your Parameters
-  macro.serialPortXTC = '/dev/ttyUSB2';
-  
-  macro.atcParameters = {
-      level:   900,     // the current level in mA where the spindle will break
-      revlevel:-3000,   // the reverse level in mA where the spindle will break
-      forward: 30,      // value for minimum rpm
-      safetyHeight: 35, // safety height
-      feedRate: 300,    // Feedrate to move over the catch cable
-      nutZ: -7,         // safety deep position of collet in nut
-  };
-  
-  // Where your tool holders?
-  macro.atcMillHolder = [
-      /* 
-       Center Position holder, 
-       |                       |catch height, 
-       |                       |            |tourque power 0-400, 
-       |                       |            |             | timeout in ms
-       |                       |            |             |                               */
-      {posX : -250, posY : 15, posZ: 5,     tourque: 300, time: 500}, // 1. endmill holder
-      {posX : -250, posY : 45, posZ: 5,     tourque: 300, time: 500}, // 2. endmill holder
-      {posX : -250, posY : 75, posZ: 5,     tourque: 300, time: 500}, // 3. endmill holder
-  ];
+   macro.serialPortXTC =   "/dev/ttyUSB1";   // XTC Controler
+   macro.addressServo =    "192.168.1.135";      // Networkaddress of Servoc ESP8266 Controller
+   macro.atcParameters = {
+         level:   800,     // the current level in mA where the spindle will break
+         revlevel:-3000,   // the reverse level in mA where the spindle will break
+         forward: 30,      // value for minimum rpm
+         safetyHeight: 27, // safety height
+         feedRate: 300,    // Feedrate to move over the catch cable
+         nutZ: -7,         // safety deep position of collet in nut
+   };
+   macro.carousel = {
+      enabled: true,
+      center:{ x:-206.8, y:73.7, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
+      servo: { block:55, unblock:5}, // position values are in degress
+      torqueDegrees: 90,              // maximum arc degrees to torque collet
+   };
+   macro.atcMillHolder = [
+      // Center Position holder, catch height, tighten val, tighten ms,    deg
+      // ---------------|-------------|-------------|-------------|---------|------
+      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 0},     // first endmill holder
+      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},    // second endmill holder
+      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},    // third endmill holder
+      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // forth endmill holder
+      {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
+      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // 6. endmill holder
+      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},   // 7. endmill holder
+      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 7. endmill holder
+      // etc.pp
+   ];
   
   macro.init(); // start macro
 }
