@@ -498,6 +498,7 @@ var myXTCMacro = {
    },
 
    unpauseGcode: function(art) {
+      this.servo(this.carousel.servo.unblock);
       console.log('ATC called: ', 'unpauseGcode', art);
 
       if(art === 'unscrew' && this.toolnumber > 0){
@@ -507,7 +508,8 @@ var myXTCMacro = {
       }
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
 
-      this.startSpindle(400, 0); // Restart spindle
+
+      // this.startSpindle(400, 0); // Restart spindle
    },
 };
 // call init from cp 
