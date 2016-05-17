@@ -5,7 +5,7 @@
 /* ------------Spindle DC Controller Macro ---------------------------------- */
 var mspc = window["SpindleControlMacro"];
 if(! mspc){
-  $.getScript( "http://rawgit.com/xpix/XTC/master/chilipeppr/macro.js", 
+  $.getScript( "http://rawgit.com/xpix/XTC/master/chilipeppr/spindle.js", 
     function( data, textStatus, jqxhr ) {
       console.log( "Load Spindle controller was performed.", data );
       mspc = window["SpindleControlMacro"];

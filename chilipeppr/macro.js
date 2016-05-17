@@ -108,6 +108,8 @@ var myXTCMacro = {
          // TODO: drawHolders again after gcode load
           this.drawHolders();
       });
+      
+      this.servo(this.carousel.servo.unblock);
    },
    uninit: function() {
       macro.status("Uninitting chilipeppr_pause macro.");
@@ -221,6 +223,8 @@ var myXTCMacro = {
 
       // first stop spindle
       this.stopSpindle();
+
+      this.servo(this.carousel.servo.unblock);
 
       this.toolnumber = data.toolnumber;
       this.events = [];
@@ -406,10 +410,6 @@ var myXTCMacro = {
       darc = this.arc(theta1, theta2);
       cmd += "G17 G2 X" + darc.XEnd + " Y" + darc.YEnd + " R" + this.carousel.center.r + "\n";
 
-      // move to looseCollet position and make a beak to unscrew complete
-      cmd += "G1 Z " + looseColletZPos + "\n";
-      cmd += "G4 P1\n";
-      
       return cmd;
 
    },
