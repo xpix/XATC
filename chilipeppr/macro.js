@@ -395,7 +395,7 @@ var myXTCMacro = {
       var theta2   = holder.deg + this.carousel.torqueDegrees;
       var darc = this.arc(theta1, theta2);
       cmd += "G17 G3 X" + darc.XEnd + " Y" + darc.YEnd +  " R" + this.carousel.center.r + "\n";
-      cmd += "G4 P1\n";
+      cmd += "G4 P2\n";
       
       // deblock spindle
       var deBlocker = $.Deferred();
