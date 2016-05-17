@@ -399,7 +399,7 @@ var myXTCMacro = {
       
       // deblock spindle
       var deBlocker = $.Deferred();
-      $.when( startBlocker, deBlocker )
+      $.when( deBlocker )
          .done( this.servo.bind(this, this.carousel.servo.unblock) );
       this.events.push({ x:darc.XEnd,  y:darc.YEnd,  z:torqueSpindleZPos,
          event: deBlocker,
