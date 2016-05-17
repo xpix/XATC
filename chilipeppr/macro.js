@@ -349,6 +349,7 @@ var myXTCMacro = {
 
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
+      cmd += "G4 P1\n"; // wait some second's for unpaused event
 
       // change to original machine Coordinaten system
       cmd += "G54\n";   
@@ -384,8 +385,10 @@ var myXTCMacro = {
          comment: 'Move servo to block spindle shaft.',
       });
       
+      var torqueSpindleZPos = (nutZ+0.2);
+      
       // move to nutZ+x cuz no tighten in this moment
-      cmd += "G1 Z" + (nutZ+0.2) + "\n"; 
+      cmd += "G1 Z" + torqueSpindleZPos + "\n"; 
       
       // move an torqueDegrees(°) arc CW
       var theta1   = holder.deg;
@@ -398,12 +401,11 @@ var myXTCMacro = {
       var deBlocker = $.Deferred();
       $.when( startSpindleSlow, startBlocker, deBlocker )
          .done( this.servo.bind(this, this.carousel.servo.unblock) );
-      this.events.push({ x:darc.XEnd,  y:darc.YEnd,  z:startSpindleSlowZPos,
+      this.events.push({ x:darc.XEnd,  y:darc.YEnd,  z:torqueSpindleZPos,
          event: deBlocker,
          comment: 'Move servo to deblock spindle shaft.',
       });
 
-      
       // move an ~90° arc CCW, back to original position
       theta1   = holder.deg + this.carousel.torqueDegrees;
       theta2   = holder.deg;
