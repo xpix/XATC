@@ -419,15 +419,18 @@ var myXTCMacro = {
    arc:function(theta1, theta2){
       if(theta2 > 360) theta2 =- 360; 
 
+      theta1 = theta1*(Math.PI/180); // calculate in radians
+      theta2 = theta2*(Math.PI/180); // calculate in radians
+
       var carousel = this.carousel.center;
       // calculate the arc move, from center of carousel
       // http://www.instructables.com/id/How-to-program-arcs-and-linear-movement-in-G-Code-/?ALLSTEPS
       var xe   = parseFloat((carousel.r*Math.cos(theta2)).toFixed(2));              // Xc+(R*cos(Theta2))
       var ye   = parseFloat((carousel.r*Math.sin(theta2)).toFixed(2));              // Yc+(R*sin(Theta2))
-      var i    = parseFloat(((carousel.r*Math.cos(theta1))-carousel.x).toFixed(2)); // (Xc-(R*cos(Theta1)))-Xc   
-      var j    = parseFloat(((carousel.r*Math.sin(theta1))-carousel.y).toFixed(2)); // (Yc-(R*sin(Theta1)))-Yc   
+      var xs   = parseFloat(((carousel.r*Math.cos(theta1))).toFixed(2)); // (Xc-(R*cos(Theta1)))-Xc   
+      var ys   = parseFloat(((carousel.r*Math.sin(theta1))).toFixed(2)); // (Yc-(R*sin(Theta1)))-Yc   
 
-      return {XEnd: xe, YEnd: ye, I: i, J: j};      
+      return {XEnd: xe, YEnd: ye, XStart: xs, YStart: ys};      
    },
 
    
