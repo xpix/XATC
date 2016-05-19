@@ -98,7 +98,7 @@ var myXTCMacro = {
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete ", this, this.onChiliPepprPauseOnComplete );
-      chilipeppr.subscribe("/com-chilipeppr-widget-eagle/addGcode", this, this.onAddGcode);
+      chilipeppr.subscribe("/com-chilipeppr-widget-eagle/beforeToolPathRender", this, this.onBeforeRender);
 
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
 
@@ -116,12 +116,12 @@ var myXTCMacro = {
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
       chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete ", this, this.onChiliPepprPauseOnComplete );
-      chilipeppr.unsubscribe("/com-chilipeppr-widget-eagle/addGcode", this, this.onAddGcode);
+      chilipeppr.unsubscribe("/com-chilipeppr-widget-eagle/beforeToolPathRender", this, this.onBeforeRender);
 
       this.sceneRemove();
    },
-   onAddGcode: function(data){
-      console.log('ATC AddGcode:', data);
+   onBeforeRender: function(data){
+      console.log('ATC onBeforeRender:', data);
       // drawHolders again after gcode load
       setTimeout(function(){
          this.drawHolders();
