@@ -287,31 +287,35 @@ var myXTCMacro = {
       var looseCollet = $.Deferred();
       var looseColletZPos = atcparams.nutZ+1;
 
-      // add a rule if looseCollet event happend after startSpindleSlow
-      $.when( looseCollet )
-         .done( this.atc_unscrew.bind(this) );
-
-      // register the event for updateAxesFromStatus, 
-      // the cool thing this event will only one time fired :)
-      this.events.push({ x:holder.posX,  y:holder.posY,  z:looseColletZPos,
-         event: looseCollet,
-         comment: 'Rotate spindle backwards with full power for 0.5 seconds.',
-      });
+      if(art == 'unscrew'){
+         // add a rule if looseCollet event happend after startSpindleSlow
+         $.when( looseCollet )
+            .done( this.atc_unscrew.bind(this) );
+   
+         // register the event for updateAxesFromStatus, 
+         // the cool thing this event will only one time fired :)
+         this.events.push({ x:holder.posX,  y:holder.posY,  z:looseColletZPos,
+            event: looseCollet,
+            comment: 'Rotate spindle backwards with full power for 0.5 seconds.',
+         });
+      }
 
       // Prepare event tightCollet ---------------------------------------------
       var tightCollet = $.Deferred();
       var tightColletZPos = atcparams.nutZ;
       
-      // add a rule if tightCollet event happend
-      $.when( tightCollet )
-         .done( this.atc_screw.bind(this) );
-
-      // register the event for updateAxesFromStatus, 
-      // the cool thing this event will only one time fired :)
-      this.events.push({ x:holder.posX,  y:holder.posY,  z:tightColletZPos,
-         event: tightCollet,
-         comment: 'Rotate spindle forward with full power for 0.5 seconds.',
-      });
+      if(art == 'screw'){
+         // add a rule if tightCollet event happend
+         $.when( tightCollet )
+            .done( this.atc_screw.bind(this) );
+   
+         // register the event for updateAxesFromStatus, 
+         // the cool thing this event will only one time fired :)
+         this.events.push({ x:holder.posX,  y:holder.posY,  z:tightColletZPos,
+            event: tightCollet,
+            comment: 'Rotate spindle forward with full power for 0.5 seconds.',
+         });
+      }
 
       // Prepare event unpause ---------------------------------------------
       var unpause = $.Deferred();
