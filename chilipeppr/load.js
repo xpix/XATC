@@ -10,6 +10,7 @@ if(! mspc){
       console.log( "Load Spindle controller was performed.", data );
       mspc = window["SpindleControlMacro"];
       setSPCParams(mspc);
+      mspc.init(); // start macro
     });
 }
 else {
@@ -19,8 +20,6 @@ else {
 function setSPCParams(macro){
   // here you can set your Parameters
   macro.serialPortXTC = '/dev/ttyUSB1';
-
-  macro.init(); // start macro
 }
 
 /* -----------Automatic Toolchanger Macro ----------------------------------- */
@@ -31,6 +30,7 @@ if(! mxtc){
       console.log( "Load XATC macro was performed.", data );
       mxtc = window["myXTCMacro"];
       setXTCParams(mxtc);
+      mxtc.init();
     });
 }
 else {
@@ -68,6 +68,4 @@ function setXTCParams(macro){
       {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 7. endmill holder
       // etc.pp
    ];
-  
-  macro.init(); // start macro
 }
