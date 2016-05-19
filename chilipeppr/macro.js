@@ -130,30 +130,40 @@ var myXTCMacro = {
       }
    },
    updateAxesFromStatus: function (axes) {
-      console.log("ATC updateAxesFromStatus. data:", axes);
       if ('x' in axes && axes.x !== null) {
-          this.axis.x = (Math.round( axes.x * 10 )/10 );
+          this.axis.x = this.rd( axes.x );
       }
       if ('y' in axes && axes.y !== null) {
-          this.axis.y = (Math.round( axes.y * 10 )/10 );
+          this.axis.y = this.rd( axes.y );
       }
       if ('z' in axes && axes.z !== null) {
-          this.axis.z = (Math.round( axes.z * 10 )/10 );
+          this.axis.z = this.rd( axes.z );
       }
+
+      console.log("ATC updateAxesFromStatus. data:", this.axes);
 
       var that = this;
 
       // check all events and compare the axis states with event states
-      // if has the event xyz the same values as the actual position
+      // if has the event xyz the same (rounded to X.1) values as the actual position
       // then fire up the planned event
       this.events.forEach(function(entry){
-         if(entry.event.state() != 'resolved' && entry.x == that.axis.x && entry.y == that.axis.y && entry.z == that.axis.z){
-            console.log("ATC updateAxesFromStatus:", that.axis);
-            entry.event.resolve();                                // Fire up the event
-            console.log('ATC fire Event: ', entry.comment);
-         }
+         if(entry.event.state() != 'resolved' 
+            && this.rd(entry.x) == that.axis.x 
+            && this.rd(entry.x) == that.axis.y 
+            && this.rd(entry.x) == that.axis.z
+            )
+            {
+               entry.event.resolve();                                // Fire up the event
+               console.log('ATC fire Event: ', entry.comment);
+            }
       });
    },
+   // Round values
+   rd:function(wert) { 
+      return (Math.round( wert * 10 )/10 );
+   },
+
    get3dObj: function (callback) {
       this.userCallbackForGet3dObj = callback;
       chilipeppr.subscribe("/com-chilipeppr-widget-3dviewer/recv3dObject", this, this.get3dObjCallback);
@@ -345,7 +355,7 @@ var myXTCMacro = {
       cmd += "G4 P2\n"; // wait some second's for screw/unscrew event
 
       // Add gcode and events for the XATC carousel
-      cmd += this.torqueMove(nutZ, looseColletZPos,holder, atcparams);
+      cmd += this.torqueMove(nutZ, holder, atcparams);
 
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
@@ -357,7 +367,7 @@ var myXTCMacro = {
       chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
    },
 
-   torqueMove: function(nutZ, looseColletZPos, holder, atcparams){
+   torqueMove: function(nutZ, holder, atcparams){
       if(! this.carousel.enabled) 
          return '';
 
