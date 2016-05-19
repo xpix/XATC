@@ -403,15 +403,14 @@ var myXTCMacro = {
       // move an torqueDegrees(°) arc CW
       var theta1   = holder.deg;
       var theta2   = holder.deg + this.carousel.torqueDegrees;
-      var darc = this.arc(theta1, theta2);
-      cmd += "G17 G3 X" + darc.XEnd + " Y" + darc.YEnd +  " R" + this.carousel.center.r + "\n";
+      cmd += this.arc('G3', theta1, theta2);
       cmd += "G4 P2\n";
       
-      // deblock spindle
+      // deblock spindle at end of arc move
       var deBlocker = $.Deferred();
       $.when( deBlocker )
          .done( this.servo.bind(this, this.carousel.servo.unblock) );
-      this.events.push({ x:darc.XEnd,  y:darc.YEnd,  z:torqueSpindleZPos,
+      this.events.push({ x: this.darc.XEnd,  y: this.darc.YEnd,  z:torqueSpindleZPos,
          event: deBlocker,
          comment: 'Move servo to deblock spindle shaft.',
       });
@@ -419,15 +418,15 @@ var myXTCMacro = {
       // move an ~90° arc CCW, back to original position
       theta1   = holder.deg + this.carousel.torqueDegrees;
       theta2   = holder.deg;
-      darc = this.arc(theta1, theta2);
-      cmd += "G17 G2 X" + darc.XEnd + " Y" + darc.YEnd + " R" + this.carousel.center.r + "\n";
+      cmd += this.arc('G2', theta1, theta2);
 
       return cmd;
-
    },
    
-   arc:function(theta1, theta2){
+   arc:function(mode, theta1, theta2){
       if(theta2 > 360) theta2 =- 360; 
+
+      this.darc = {};
 
       theta1 = theta1*(Math.PI/180); // calculate in radians
       theta2 = theta2*(Math.PI/180); // calculate in radians
@@ -440,7 +439,9 @@ var myXTCMacro = {
       var xs   = parseFloat(((carousel.r*Math.cos(theta1))).toFixed(2)); // (Xc-(R*cos(Theta1)))-Xc   
       var ys   = parseFloat(((carousel.r*Math.sin(theta1))).toFixed(2)); // (Yc-(R*sin(Theta1)))-Yc   
 
-      return {XEnd: xe, YEnd: ye, XStart: xs, YStart: ys};      
+      this.darc = {XEnd: xe, YEnd: ye, XStart: xs, YStart: ys};
+
+      return "G17 " + mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
    },
 
    
