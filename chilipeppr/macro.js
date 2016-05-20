@@ -72,7 +72,7 @@ var myXTCMacro = {
       {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},    // third endmill holder
       {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // forth endmill holder
       {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
-      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 145},   // 6. endmill holder
+      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // 6. endmill holder
       {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},   // 7. endmill holder
       {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},   // 8. endmill holder
       // etc.pp
