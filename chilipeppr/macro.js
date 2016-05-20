@@ -67,14 +67,14 @@ var myXTCMacro = {
    atcMillHolder: [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
-      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 0},     // first endmill holder
-      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},    // second endmill holder
-      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},    // third endmill holder
-      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // forth endmill holder
+      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 360},     // first endmill holder
+      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},    // second endmill holder
+      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},    // third endmill holder
+      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // forth endmill holder
       {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
-      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // 6. endmill holder
-      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},   // 7. endmill holder
-      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 8. endmill holder
+      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 145},   // 6. endmill holder
+      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},   // 7. endmill holder
+      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},   // 8. endmill holder
       // etc.pp
    ],
    feedRate: 100,
@@ -500,7 +500,12 @@ var myXTCMacro = {
    },
    
    arc:function(mode, theta1, theta2){
-      if(theta2 > 360) theta2 =- 360; 
+      //if(theta2 > 360) theta2 =- 360; 
+
+      //theta1 = 360-theta1;
+      //theta2 = 360-theta2;
+
+      console.log('Thetas: ', theta1,theta2);
 
       this.darc = {};
 
@@ -510,16 +515,14 @@ var myXTCMacro = {
       var carousel = this.carousel.center;
       // calculate the arc move, from center of carousel
       // http://www.instructables.com/id/How-to-program-arcs-and-linear-movement-in-G-Code-/?ALLSTEPS
-      var xc = 0, yc = 0;
-      var xe   = parseFloat(xc+(carousel.r*Math.cos(theta2)).toFixed(2));   // Xc+(R*cos(Theta2))
-      var ye   = parseFloat(yc+(carousel.r*Math.sin(theta2)).toFixed(2));   // Yc+(R*sin(Theta2))
-      var xs   = parseFloat((xc-(carousel.r*Math.cos(theta1)))-xc).toFixed(2); // (Xc-(R*cos(Theta1)))-Xc   
-      var ys   = parseFloat((yc-(carousel.r*Math.sin(theta1)))-yc).toFixed(2); // (Yc-(R*sin(Theta1)))-Yc   
+      var xe   = parseFloat((carousel.r*Math.cos(theta2)).toFixed(2));   // Xc+(R*cos(Theta2))
+      var ye   = parseFloat((carousel.r*Math.sin(theta2)).toFixed(2));   // Yc+(R*sin(Theta2))
+      var xs   = parseFloat(((carousel.r*Math.cos(theta1))).toFixed(2)); // (Xc-(R*cos(Theta1)))-Xc   
+      var ys   = parseFloat(((carousel.r*Math.sin(theta1))).toFixed(2)); // (Yc-(R*sin(Theta1)))-Yc   
 
-      this.darc = {I: xs, J: ys, XEnd: xe, YEnd: ye};
-      console.log('ARC data arc', this.darc);
+      this.darc = {XEnd: xe, YEnd: ye, XStart: xs, YStart: ys};
 
-      return mode + " X" + xe + " Y" + ye + " I" + xs + " J" + ys + "\n";
+      return mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
    },
 
    
