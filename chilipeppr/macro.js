@@ -74,7 +74,7 @@ var myXTCMacro = {
       {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
       {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // 6. endmill holder
       {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},   // 7. endmill holder
-      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 7. endmill holder
+      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 8. endmill holder
       // etc.pp
    ],
    feedRate: 100,
@@ -351,8 +351,8 @@ var myXTCMacro = {
 
       // now move spindle to the holder position
       // first to safetyHeight ...
-      // change to G59 coordinaten system
-      var cmd = "G59\n";
+      // change to G59 coordinaten system & XY plave for ARC's
+      var cmd = "G59 G17\n";
 
       // move Z to safety height
       cmd += "G0 Z" + atcparams.safetyHeight + "\n";
@@ -510,14 +510,16 @@ var myXTCMacro = {
       var carousel = this.carousel.center;
       // calculate the arc move, from center of carousel
       // http://www.instructables.com/id/How-to-program-arcs-and-linear-movement-in-G-Code-/?ALLSTEPS
-      var xe   = parseFloat((carousel.r*Math.cos(theta2)).toFixed(2));              // Xc+(R*cos(Theta2))
-      var ye   = parseFloat((carousel.r*Math.sin(theta2)).toFixed(2));              // Yc+(R*sin(Theta2))
-      var xs   = parseFloat(((carousel.r*Math.cos(theta1))).toFixed(2)); // (Xc-(R*cos(Theta1)))-Xc   
-      var ys   = parseFloat(((carousel.r*Math.sin(theta1))).toFixed(2)); // (Yc-(R*sin(Theta1)))-Yc   
+      var xc = 0, yc = 0;
+      var xe   = parseFloat(xc+(carousel.r*Math.cos(theta2)).toFixed(2));   // Xc+(R*cos(Theta2))
+      var ye   = parseFloat(yc+(carousel.r*Math.sin(theta2)).toFixed(2));   // Yc+(R*sin(Theta2))
+      var xs   = parseFloat((xc-(carousel.r*Math.cos(theta1)))-xc).toFixed(2); // (Xc-(R*cos(Theta1)))-Xc   
+      var ys   = parseFloat((yc-(carousel.r*Math.sin(theta1)))-yc).toFixed(2); // (Yc-(R*sin(Theta1)))-Yc   
 
-      this.darc = {XEnd: xe, YEnd: ye, XStart: xs, YStart: ys};
+      this.darc = {XStart: xs, YStart: ys, XEnd: xe, YEnd: ye};
+      console.log('ARC data arc', this.darc);
 
-      return "G17 " + mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
+      return mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
    },
 
    
