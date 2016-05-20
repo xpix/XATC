@@ -516,10 +516,10 @@ var myXTCMacro = {
       var xs   = parseFloat((xc-(carousel.r*Math.cos(theta1)))-xc).toFixed(2); // (Xc-(R*cos(Theta1)))-Xc   
       var ys   = parseFloat((yc-(carousel.r*Math.sin(theta1)))-yc).toFixed(2); // (Yc-(R*sin(Theta1)))-Yc   
 
-      this.darc = {XStart: xs, YStart: ys, XEnd: xe, YEnd: ye};
+      this.darc = {I: xs, J: ys, XEnd: xe, YEnd: ye};
       console.log('ARC data arc', this.darc);
 
-      return mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
+      return mode + " X" + xe + " Y" + ye + " I" + xs + " J" + ys + "\n";
    },
 
    
