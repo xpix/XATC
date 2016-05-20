@@ -531,7 +531,7 @@ var myXTCMacro = {
    startSpindle: function(speed, level){
       var cmd = '';
       cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd 100\n" 
+                  + "fwd 100 100\n" 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
       cmd = "send " + this.serialPortXTC + " " 
                   + "fwd " + speed + "\n"; 
