@@ -138,18 +138,18 @@ var myXTCMacro = {
         this.onATC({toolnumber: toolnumber});
       }
    },
-   updateAxesFromStatus: function (axes) {
-      if ('x' in axes && axes.x !== null) {
-          this.axis.x = this.rd( axes.x );
+   updateAxesFromStatus: function (axis) {
+      if ('x' in axis && axis.x !== null) {
+          this.axis.x = this.rd( axis.x );
       }
-      if ('y' in axes && axes.y !== null) {
-          this.axis.y = this.rd( axes.y );
+      if ('y' in axis && axis.y !== null) {
+          this.axis.y = this.rd( axis.y );
       }
-      if ('z' in axes && axes.z !== null) {
-          this.axis.z = this.rd( axes.z );
+      if ('z' in axis && axis.z !== null) {
+          this.axis.z = this.rd( axis.z );
       }
 
-      console.log("ATC updateAxesFromStatus. data:", this.axes);
+      console.log("ATC updateAxesFromStatus. data:", this.axis);
 
       var that = this;
 
@@ -158,13 +158,13 @@ var myXTCMacro = {
       // then fire up the planned event
       this.events.forEach(function(entry){
          if(entry.event.state() != 'resolved' 
-            && this.rd(entry.x) == that.axis.x 
-            && this.rd(entry.x) == that.axis.y 
-            && this.rd(entry.x) == that.axis.z
+            && that.rd(entry.x) == that.axis.x 
+            && that.rd(entry.y) == that.axis.y 
+            && that.rd(entry.z) == that.axis.z
             )
             {
                entry.event.resolve();                                // Fire up the event
-               console.log('ATC fire Event: ', entry.comment);
+               console.log('ATC fire Event: ', entry);
             }
       });
    },
@@ -251,6 +251,7 @@ var myXTCMacro = {
       // check if the same tool in use
       if(this.toolinuse > 0 && this.toolnumber == this.toolinuse){
          console.log('ATC same tool number: ignored', this);
+         this.unpauseGcode();
          return;
       } 
       // check if a different tool in use
@@ -451,11 +452,11 @@ var myXTCMacro = {
       // Move to Z-zero + x
       var startSpindleSlowZPos = 0.3;
       cmd += "G1 Z" + startSpindleSlowZPos + "\n";
-      cmd += "G4 P1\n"; // wait some second's for start rotate spindle
+      cmd += "G4 P2\n"; // wait some second's for start rotate spindle
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, atcparams.forward, atcparams.level) );
+         .done( this.startSpindle.bind(this, 15, 400) );
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
@@ -530,7 +531,9 @@ var myXTCMacro = {
    startSpindle: function(speed, level){
       var cmd = '';
       cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd 400\n" 
+                  + "fwd 100\n" 
+      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      cmd = "send " + this.serialPortXTC + " " 
                   + "fwd " + speed + "\n"; 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
       console.log('ATC spindle', cmd);
@@ -538,7 +541,9 @@ var myXTCMacro = {
       cmd = "send " + this.serialPortXTC + " " 
                   + "lev " + level + "\n"; 
       if(level > 0)
+      setTimeout(function(){
          chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      }, 250);
    },
 
    stopSpindle: function(){
@@ -565,7 +570,7 @@ var myXTCMacro = {
       // unscrew process
       // rotate backward with more power(+50) as the tight process    
       var cmd = "send " + this.serialPortXTC + " " 
-         + "unscrew 400  " + this.atcParameters.revlevel + " " + holder.time + "\n";
+         + "bwd 400 100"; // + this.atcParameters.revlevel + " " + holder.time + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // unset tool in use
@@ -579,7 +584,7 @@ var myXTCMacro = {
       
       // tighten process (TODO: use level)
       var cmd = "send " + this.serialPortXTC + " " 
-                  + "screw " + holder.tourque + " " + holder.time + "\n";
+                  + "fwd " + 100 + " " + 250 + "\n";
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       // set tool in use
