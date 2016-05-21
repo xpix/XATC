@@ -61,7 +61,7 @@ var myXTCMacro = {
    carousel:{
       enabled: true,
       center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
-      servo: { block:120, unblock:1}, // position values are in degress
+      servo: { block:87, unblock:1}, // position values are in degress
       torqueDegrees: 90,              // maximum arc degrees to torque collet
    },
    atcMillHolder: [
@@ -240,9 +240,6 @@ var myXTCMacro = {
       // and we can do whatever we like :)
       console.log('ATC Process:', this);
 
-      // first stop spindle
-      this.stopSpindle();
-
       this.servo(this.carousel.servo.unblock);
 
       this.toolnumber = data.toolnumber;
@@ -267,6 +264,13 @@ var myXTCMacro = {
    atc_move_to_holder: function( toolnumber, art ){
 
       console.log('ATC called: ', 'atc_move_to_holder', toolnumber, art);
+
+      // first stop spindle
+      //this.stopSpindle();
+
+      // then prepare spindle
+      this.startSpindle(100);
+
 
       // get parameters for millholder
       var atcparams = this.atcParameters;
@@ -450,23 +454,27 @@ var myXTCMacro = {
       var cmd = '';
 
       // Move to Z-zero + x
-      var startSpindleSlowZPos = 0.3;
+      var startSpindleSlowZPos = 0.2;
       cmd += "G1 Z" + startSpindleSlowZPos + "\n";
       cmd += "G4 P2\n"; // wait some second's for start rotate spindle
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, 15, 400) );
+         .done( this.startSpindle.bind(this, 27) );
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
       });
       
+      var blockSpindlePos = 0.3;
+      cmd += "G1 F10 Z" + blockSpindlePos + "\n";
+      cmd += "F2000\nG4 P2\n"; // wait some second's for start rotate spindle
+
       // block spindle via servo
       var startBlocker = $.Deferred();
       $.when( startSpindleSlow, startBlocker )
          .done( this.servo.bind(this, this.carousel.servo.block) );
-      this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
          event: startBlocker,
          comment: 'Move servo to block spindle shaft.',
       });
@@ -534,11 +542,9 @@ var myXTCMacro = {
    startSpindle: function(speed, level){
       var cmd = '';
       cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd 100 100\n" 
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-      cmd = "send " + this.serialPortXTC + " " 
                   + "fwd " + speed + "\n"; 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+
       console.log('ATC spindle', cmd);
 
       cmd = "send " + this.serialPortXTC + " " 
@@ -546,7 +552,7 @@ var myXTCMacro = {
       if(level > 0)
       setTimeout(function(){
          chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-      }, 250);
+      }, 500);
    },
 
    stopSpindle: function(){

@@ -53,19 +53,19 @@ function setXTCParams(macro){
       enabled: true,
       center:{ x:-206.8, y:73.7, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
       servo: { block:55, unblock:5}, // position values are in degress
-      torqueDegrees: 90,              // maximum arc degrees to torque collet
+      torqueDegrees: 45,              // maximum arc degrees to torque collet
    };
    macro.atcMillHolder = [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
-      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 0},     // first endmill holder
-      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},    // second endmill holder
-      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},    // third endmill holder
-      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // forth endmill holder
+      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 360},     // first endmill holder
+      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},    // second endmill holder
+      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},    // third endmill holder
+      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // forth endmill holder
       {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
-      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // 6. endmill holder
-      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},   // 7. endmill holder
-      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},   // 7. endmill holder
+      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // 6. endmill holder
+      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},   // 7. endmill holder
+      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},   // 8. endmill holder
       // etc.pp
    ];
 }
