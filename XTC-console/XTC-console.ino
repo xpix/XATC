@@ -1,19 +1,36 @@
 /*
 The XTC Console program to communicate between chilipeppr and motordriver. 
 Use a normal arduino nano at this time and send textcommands (a kind of g-code for spindle)
+Please use this DC Controller (30A High Power Single way H-bridge DC Motor Driver Module) http://www.ebay.com/itm/131528092776 
+and a ACS712 Current sensor
+
+Use this pinout:
+ACS712: 
+  VCC --> 5V
+  SIG --> A0
+  3.3 --> A5
+  GND --> GND
+
+DC Controller
+  GND --> GND
+  PA  --> D9
+  A1  --> D2
+  A2  --> D4
+  
 */
 
 // Demo Code for SerialCommand Library Steven Cogswell May 2011
 // https://github.com/scogswell/ArduinoSerialCommand
 
-#include <SerialCommand.h>
-#include "DualVNH5019MotorShield.h"
+#include "SerialCommand.h"
+//#include "DualVNH5019MotorShield.h"
+#include "DCMController.h"
 #include "Timer.h"
 
 #define arduinoLED 13         // Arduino LED on board
 #define defaultSpeed 100      // Default speed for spindle
 #define defaultBreak 400      // Default power for breake 
-#define interval 50          // interval in milliseconds to test the motor current
+#define interval 50           // interval in milliseconds to test the motor current
 
 int level   = 0;
 int currentEvent;
@@ -21,7 +38,7 @@ int debugEvent;
 
 
 SerialCommand SCmd;        // The SerialCommand object
-DualVNH5019MotorShield md; // The motor driver
+DCMController md;          // The motor driver
 Timer timer;               // The timer object
 
 // fwd 400 500
@@ -78,12 +95,18 @@ void spindle_break()
 }
 
 void set_dbg(){
+  int dbg_interval = interval;
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg != NULL)      // As long as it existed, take it
+  {
+      dbg_interval = atol(arg);
+  }
   if(debugEvent){
       timer.stop(debugEvent);
       debugEvent = 0;
   }
   else {
-      debugEvent = timer.every(interval, spindle_status);
+      debugEvent = timer.every(dbg_interval, spindle_status);
   }
   ok();   
 }
@@ -91,8 +114,7 @@ void set_dbg(){
 // sta
 void spindle_status()
 {
-  char fault = md.getM1Fault();
-  int  ma    = md.getM1CurrentMilliamps();
+  int ma    = md.getM1CurrentMilliamps();
 
   Serial.print("Cur: "); 
   Serial.print(ma); 
@@ -100,10 +122,7 @@ void spindle_status()
   Serial.print("\t"); 
 
   Serial.print("Lev: "); 
-  Serial.print(level); 
-  Serial.print("\t"); 
-
-  Serial.println((fault ? "error" : "ok")); 
+  Serial.println(level); 
 }
 
 // lev 3000
