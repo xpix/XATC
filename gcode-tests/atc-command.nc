@@ -1,4 +1,4 @@
-﻿G21 (mm mode)
+G21 (mm mode)
 G90 (abs mode)
 M3 (spindle on)
 (get first tool from holder)
