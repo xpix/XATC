@@ -8,6 +8,8 @@ char* pass = ".........";
 int position  = 0;
 int target    = 0;
 int pin       = 5; // Servo pin
+int wait      = 200;
+int readpin   = A0;
 
 
 ESP8266WebServer server(80);
@@ -44,7 +46,9 @@ void setup(void){
   server.on("/servo", [](){
     String sval = server.arg("value");
     position = sval.toInt();
-    myservo.write(position);
+    while(setServo(position) == 0){
+      Serial.println('Failed block, repeat ...');
+    }
     server.send(200, "text/plain", info(position, target));
   });
 
@@ -64,4 +68,18 @@ String info(int position, int target){
   Serial.print(text);
   return text;
 }
+
+int setServo(int pos){
+  myservo.write(pos);
+  
+  // wait x milliseconds
+  delay(wait);
+
+  // check value on Analog input
+  int realtarget = analogRead(A0);
+  if(target > 0 && realtarget < target){
+    return 0;
+  }
+  return realtarget;
+} 
  
