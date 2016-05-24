@@ -53,7 +53,7 @@ var myXTCMacro = {
    atcParameters: {
          level:   800,     // the current level in mA where the spindle will break
          revlevel:-3000,   // the reverse level in mA where the spindle will break
-         forward: 30,      // value for minimum rpm
+         forward: 27,      // value for minimum rpm
          safetyHeight: 35, // safety height
          feedRate: 300,    // Feedrate to move over the catch cable
          nutZ: -7,         // safety deep position of collet in nut
@@ -460,7 +460,7 @@ var myXTCMacro = {
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, 27) );
+         .done( this.startSpindle.bind(this, this.atcParameters.forward, 0, 'bwd') );
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
@@ -508,13 +508,6 @@ var myXTCMacro = {
    },
    
    arc:function(mode, theta1, theta2){
-      //if(theta2 > 360) theta2 =- 360; 
-
-      //theta1 = 360-theta1;
-      //theta2 = 360-theta2;
-
-      console.log('Thetas: ', theta1,theta2);
-
       this.darc = {};
 
       theta1 = theta1*(Math.PI/180); // calculate in radians
@@ -539,10 +532,10 @@ var myXTCMacro = {
          });
    },
    
-   startSpindle: function(speed, level){
+   startSpindle: function(speed, level, direction){
       var cmd = '';
       cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd " + speed + "\n"; 
+                  + direction + " " + speed + "\n"; 
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
 
       console.log('ATC spindle', cmd);
