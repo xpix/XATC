@@ -2,8 +2,13 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-const char* ssid = "Xpix";
-const char* pass = "xpix97ZZ";
+char* ssid = ".........";
+char* pass = ".........";
+
+int position  = 0;
+int target    = 0;
+int pin       = 5; // Servo pin
+
 
 ESP8266WebServer server(80);
 
@@ -27,26 +32,36 @@ void setup(void){
   Serial.println(WiFi.localIP());
   
   server.on("/", [](){
-    server.send(200, "text/plain", "Open /servo?value=90 to control servo");
+    server.send(200, "text/plain", "Open /servo?value=90 to control servo or set the target value via /target?value=512");
+  });
+
+  server.on("/target", [](){
+    String sval = server.arg("value");
+    target = sval.toInt();
+    server.send(200, "text/plain", info(position, target));
   });
 
   server.on("/servo", [](){
     String sval = server.arg("value");
-    int ival = sval.toInt();
-    Serial.print("Servo: ");
-    Serial.println(ival);
-    myservo.write(ival);
-    server.send(200, "text/plain", String(ival, DEC));
+    position = sval.toInt();
+    myservo.write(position);
+    server.send(200, "text/plain", info(position, target));
   });
 
   server.begin();
   Serial.println("HTTP server started");
   
-  myservo.attach(5);   // Servo attached to D5 pin on NodeMCU board
+  myservo.attach(pin);   // Servo attached to D5 pin on NodeMCU board
   myservo.write(0);
 }
  
 void loop(void){
   server.handleClient();
+}
+
+String info(int position, int target){
+  String text = String("Position: " + String(position, 'DEC') + "\tTarget: " + String(target, 'DEC') + "\n");
+  Serial.print(text);
+  return text;
 }
  
