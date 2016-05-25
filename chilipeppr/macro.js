@@ -61,7 +61,11 @@ var myXTCMacro = {
    carousel:{
       enabled: true,
       center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
-      servo: { block:87, unblock:1}, // position values are in degress
+      servo: { 
+         block:87,      // arc in degress to block the spindle shaft 
+         unblock:5,     // arc in degress to deblock the spindle shaft 
+         target: 512,   // target value readed at pin A0 on ESP to get the actua position
+      }, // position values are in degress
       torqueDegrees: 90,              // maximum arc degrees to torque collet
    },
    atcMillHolder: [
@@ -526,9 +530,12 @@ var myXTCMacro = {
 
    
    servo: function(pos){
-      $.get( 'http://' +this.addressServo +'/servo', { value: pos } )
+      $.get( 'http://' +this.addressServo +'/target', { value: this.carousel.servo.target } )
          .done(function( data ) {
-            console.log('ATC Servo get called', data);
+            $.get( 'http://' +this.addressServo +'/servo', { value: pos } )
+               .done(function( data ) {
+                  console.log('ATC Servo get called', data);
+               });
          });
    },
    

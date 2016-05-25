@@ -5,7 +5,10 @@
 char* ssid = ".........";
 char* pass = ".........";
 
-int position  = 0;
+/* --------------------------------------- */
+
+int position_zero = 5;
+int position  = position_zero;
 int target    = 0;
 int pin       = 5; // Servo pin
 int wait      = 200;
@@ -55,8 +58,8 @@ void setup(void){
   server.begin();
   Serial.println("HTTP server started");
   
-  myservo.attach(pin);   // Servo attached to D5 pin on NodeMCU board
-  myservo.write(0);
+  myservo.attach(pin);          // Servo attached to D5 pin on NodeMCU board
+  myservo.write(position_zero); // move servo arm to zero position
 }
  
 void loop(void){
@@ -78,6 +81,8 @@ int setServo(int pos){
   // check value on Analog input
   int realtarget = analogRead(A0);
   if(target > 0 && realtarget < target){
+    myservo.write(position_zero);
+    delay(wait);
     return 0;
   }
   return realtarget;

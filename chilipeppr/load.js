@@ -41,14 +41,6 @@ function setXTCParams(macro){
   // here you can set your Parameters
    macro.serialPortXTC =   "/dev/ttyUSB1";   // XTC Controler
    macro.addressServo =    "192.168.1.135";      // Networkaddress of Servoc ESP8266 Controller
-   macro.atcParameters = {
-         level:   800,     // the current level in mA where the spindle will break
-         revlevel:-3000,   // the reverse level in mA where the spindle will break
-         forward: 30,      // value for minimum rpm
-         safetyHeight: 27, // safety height
-         feedRate: 300,    // Feedrate to move over the catch cable
-         nutZ: -7,         // safety deep position of collet in nut
-   };
    macro.carousel = {
       enabled: true,
       center:{ x:-206.8, y:73.7, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
