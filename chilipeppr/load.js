@@ -44,7 +44,7 @@ function setXTCParams(macro){
    macro.carousel = {
       enabled: true,
       center:{ x:-206.8, y:73.7, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
-      servo: { block:55, unblock:5}, // position values are in degress
+      servo: { block:125, unblock:35}, // position values are in degress
       torqueDegrees: 45,              // maximum arc degrees to torque collet
    };
    macro.atcMillHolder = [

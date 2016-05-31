@@ -48,7 +48,7 @@ if (!Array.prototype.last)
     };
 
 var myXTCMacro = {
-   serialPortXTC:    "/dev/ttyUSB2",   // XTC Controler
+   serialPortXTC:    "/dev/ttyUSB2",   // Spindle DC Controler
    addressServo:     "127.0.0.1",      // Networkaddress of Servoc ESP8266 Controller
    atcParameters: {
          level:   800,     // the current level in mA where the spindle will break
