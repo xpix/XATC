@@ -19,9 +19,11 @@ function setXTCParams(){
     return macro;
 }
 
+// Stop old interval
+clearInterval(window['blocktest']);
 
-
-setInterval(function(){
+// Start interval
+window['blocktest'] = setInterval(function(){
       var settings = setXTCParams();
 
       // Move to open position
