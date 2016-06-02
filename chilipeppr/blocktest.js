@@ -12,11 +12,11 @@ function setXTCParams(){
    var macro = {
         serialPortXTC:      "/dev/ttyUSB1",  // Spindle DC Controller
         addressServo:       "192.168.1.135", // ESP8266 Webserver address
-        target:             590,             // potentiometer value at posBlock
+        target:             478,             // potentiometer value at posBlock
         posBlock:           125,             // block angle in degrees
-        posOpen:            90,              // open angle in degrees
-        sp_backward:        50,              // speed of dc spindle
-        sp_level:           2500,            // level in mA to break spindle
+        posOpen:            60,              // open angle in degrees
+        sp_backward:        60,              // speed of dc spindle
+        sp_level:           2800,            // level in mA to break spindle
    };
     
     return macro;
@@ -50,6 +50,6 @@ function loop (){
                     console.log('ATC Servo FAILED to block.', data);
                     setTimeout(loop, 5000);
                });
-        });
+        }, 1000);
       }, 2500);
 }
