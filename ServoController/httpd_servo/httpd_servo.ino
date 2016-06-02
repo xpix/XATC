@@ -7,7 +7,7 @@ char* pass = ".........";
 
 /* --------------------------------------- */
 
-int position_zero = 90;
+int position_zero = 60;
 int position  = position_zero;
 int target    = 0;
 int pin       = 5; // Servo pin
@@ -89,6 +89,7 @@ String info(int pos, int tar, int rtar){
 }
 
 int setServo(int pos){
+  randomSeed(millis());
   myservo.write(pos);
   
   // wait x milliseconds
@@ -97,10 +98,10 @@ int setServo(int pos){
   // check value on Analog input
   int rt = average(A0);
   realtarget = rt;
-  if(target > 0 && rt < target && rt > (target-50){
+  if(target > 0 && rt < target && rt > (target-50)){
     failed = true; // not ok
     myservo.write(position_zero);
-    delay(wait);
+    delay(random(201));
     return 0;
   }
   failed = false; // ok
