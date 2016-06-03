@@ -51,20 +51,22 @@ var myXTCMacro = {
    serialPortXTC:    "/dev/ttyUSB2",   // Spindle DC Controler
    addressServo:     "127.0.0.1",      // Networkaddress of Servoc ESP8266 Controller
    atcParameters: {
-         level:   800,     // the current level in mA where the spindle will break
-         revlevel:-3000,   // the reverse level in mA where the spindle will break
-         forward: 27,      // value for minimum rpm
-         safetyHeight: 35, // safety height
-         feedRate: 300,    // Feedrate to move over the catch cable
-         nutZ: -7,         // safety deep position of collet in nut
+         level:         800,  // the current level in mA where the spindle will break
+         revlevel:      -3000,// the reverse level in mA where the spindle will break
+         slow:          60,   // value for minimum rpm
+         safetyHeight:  35,   // safety height
+         feedRate:      300,  // Feedrate to move over the catch cable
+         nutZ:          -7,   // safety deep position of collet in nut
    },
    carousel:{
       enabled: true,
       center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
       servo: { 
-         block:87,      // arc in degress to block the spindle shaft 
-         unblock:5,     // arc in degress to deblock the spindle shaft 
-         target: 512,   // target value readed at pin A0 on ESP to get the actua position
+         // please test with ./blocktest.js to find perfect parameters
+         block:   125,   // arc in degress to block the spindle shaft 
+         unblock: 60,    // arc in degress to deblock the spindle shaft 
+         target:  478,   // target value readed at pin A0 on ESP to get the actual position
+         level:   2500,  // level in mA to break spindle at ~2.5 Ampere
       }, // position values are in degress
       torqueDegrees: 90,              // maximum arc degrees to torque collet
    },
@@ -85,6 +87,8 @@ var myXTCMacro = {
    toolnumber: 0,
    toolinuse: 0,
    axis: {x:0, y:0, z:0},
+   feedhold: '!',
+   resume:   '~',
    events: [],
    init: function() {
       // Uninit previous runs to unsubscribe correctly, i.e.
@@ -391,7 +395,7 @@ var myXTCMacro = {
       // change to original machine Coordinaten system
       cmd += "G54\n";   
       
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
+      this.send(cmd);
    },
 
    looseMove: function(nutZ, holder, atcparams){
@@ -456,6 +460,7 @@ var myXTCMacro = {
          return '';
 
       var cmd = '';
+      var that = this;
 
       // Move to Z-zero + x
       var startSpindleSlowZPos = 0.2;
@@ -464,7 +469,7 @@ var myXTCMacro = {
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, this.atcParameters.forward, 0, 'bwd') );
+         .done( this.startSpindle.bind(this, this.atcParameters.slow, 0, 'bwd') );
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
@@ -472,12 +477,20 @@ var myXTCMacro = {
       
       var blockSpindlePos = 0.3;
       cmd += "G1 F10 Z" + blockSpindlePos + "\n";
-      cmd += "F2000\nG4 P2\n"; // wait some second's for start rotate spindle
+      cmd += "F1500\n"; // set Feedrate for screw process
+      cmd += "G4 P1\n"; // wait some second's for start rotate spindle
+      cmd += this.feedhold + "\n"; // feedhold the machine and wait to resume
 
-      // block spindle via servo
+      // block spindle via servo 
+      // and call resume after success block
       var startBlocker = $.Deferred();
       $.when( startSpindleSlow, startBlocker )
-         .done( this.servo.bind(this, this.carousel.servo.block) );
+         .done( function(){
+            that.servo( 
+               that.carousel.servo.block, 
+               that.send.bind(that, that.resume)
+            );
+         });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
          event: startBlocker,
          comment: 'Move servo to block spindle shaft.',
@@ -528,46 +541,49 @@ var myXTCMacro = {
       return mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
    },
 
-   
-   servo: function(pos){
+   servo: function(pos, callback){
       $.get( 'http://' +this.addressServo +'/target', { value: this.carousel.servo.target } )
          .done(function( data ) {
             $.get( 'http://' +this.addressServo +'/servo', { value: pos } )
                .done(function( data ) {
+                  callback();
                   console.log('ATC Servo get called', data);
                });
          });
    },
+
+   
+   send: function(command, port){
+      if(port !== undefined) port = ' ';
+      var cmd = "send " + port + " " + command + "\n"; 
+      console.log('ATC SEND: ', command, port);
+      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+   },
    
    startSpindle: function(speed, level, direction){
-      var cmd = '';
-      cmd = "send " + this.serialPortXTC + " " 
-                  + direction + " " + speed + "\n"; 
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      var cmd = direction + " " + speed; 
+      this.send(cmd, this.serialPortXTC);
 
       console.log('ATC spindle', cmd);
 
-      cmd = "send " + this.serialPortXTC + " " 
-                  + "lev " + level + "\n"; 
       if(level > 0)
-      setTimeout(function(){
-         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-      }, 500);
+         setTimeout(function(){
+            var cmd = "lev " + level;
+            this.send(cmd, this.serialPortXTC);
+         }, 500);
    },
 
    stopSpindle: function(){
-      var cmd = "send " + this.serialPortXTC + " " + "brk\n"; 
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
-      console.log('ATC spindle', cmd);
+      this.send("brk", this.serialPortXTC);
+      console.log('ATC brk spindle');
    },
 
 
    // Event to move to savetyHeight in Z Axis
    atc_sec_height: function(){
       console.log('ATC called: ', 'atc_sec_height');
-
-      var cmd = "G0 Z" + this.atcParameters.safetyHeight + "\n";
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/send", cmd);
+      var cmd = "G0 Z" + this.atcParameters.safetyHeight;
+      this.send(cmd);
    },
 
    // Event to move to unscrew the collet
@@ -578,9 +594,7 @@ var myXTCMacro = {
       
       // unscrew process
       // rotate backward with more power(+50) as the tight process    
-      var cmd = "send " + this.serialPortXTC + " " 
-         + "bwd 400 100"; // + this.atcParameters.revlevel + " " + holder.time + "\n";
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      this.send("bwd 400 100", this.serialPortXTC);
 
       // unset tool in use
       this.toolinuse = 0;
@@ -592,9 +606,7 @@ var myXTCMacro = {
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
       // tighten process (TODO: use level)
-      var cmd = "send " + this.serialPortXTC + " " 
-                  + "fwd " + 100 + " " + 250 + "\n";
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      this.send("fwd 100 250", this.serialPortXTC);
 
       // set tool in use
       this.toolinuse = this.toolnumber;
@@ -610,7 +622,6 @@ var myXTCMacro = {
          return;
       }
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
-
 
       // this.startSpindle(400, 0); // Restart spindle
    },
