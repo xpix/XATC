@@ -478,8 +478,8 @@ var myXTCMacro = {
       var blockSpindlePos = 0.3;
       cmd += "G1 F10 Z" + blockSpindlePos + "\n";
       cmd += "F1500\n"; // set Feedrate for screw process
-      cmd += "G4 P1\n"; // wait some second's for start rotate spindle
-      cmd += this.feedhold + "\n"; // feedhold the machine and wait to resume
+      cmd += "G4 P2\n"; // wait some second's for start rotate spindle
+      //cmd += this.feedhold + "\n"; // feedhold the machine and wait to resume
 
       // block spindle via servo 
       // and call resume after success block
@@ -558,13 +558,17 @@ var myXTCMacro = {
 
    
    send: function(command, port){
-      if(port !== undefined) port = ' ';
-      var cmd = "send " + port + " " + command + "\n"; 
+      var cmd = "send " + command + "\n"; 
+      if(port !== undefined){
+            cmd = "send " + port + " " + command + "\n"; 
+      }
       console.log('ATC SEND: ', command, port);
       chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
    },
    
    startSpindle: function(speed, level, direction){
+      if(direction === undefined)
+            direction = 'fwd';
       var cmd = direction + " " + speed; 
       this.send(cmd, this.serialPortXTC);
 
