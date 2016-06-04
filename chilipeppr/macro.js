@@ -56,7 +56,7 @@ var myXTCMacro = {
          slow:          60,   // value for minimum rpm
          safetyHeight:  27,   // safety height
          feedRate:      300,  // Feedrate to move over the catch cable
-         nutZ:          -7,   // safety deep position of collet in nut
+         nutZ:          -5,   // safety deep position of collet in nut
    },
    carousel:{
       enabled: true,
