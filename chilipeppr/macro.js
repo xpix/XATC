@@ -60,7 +60,7 @@ var myXTCMacro = {
    },
    carousel:{
       enabled: true,
-      center:{ x:-200, y:15, z: -5, r:90 },  // center of carousel and radius of the diameter center circle
+      center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
       servo: { 
          // please test with ./blocktest.js to find perfect parameters
          block:   125,   // arc in degress to block the spindle shaft 
