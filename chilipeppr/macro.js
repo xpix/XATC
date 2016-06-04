@@ -558,12 +558,15 @@ var myXTCMacro = {
 
    
    send: function(command, port){
-      var cmd = "send " + command + "\n"; 
       if(port !== undefined){
-            cmd = "send " + port + " " + command + "\n"; 
+         // port send (second controller)
+         var cmd = "send " + port + " " + command + "\n"; 
+         chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
+      } else {
+         // direct send
+         chilipeppr.publish("/com-chilipeppr-widget-serialport/send", command);
       }
       console.log('ATC SEND: ', command, port);
-      chilipeppr.publish("/com-chilipeppr-widget-serialport/ws/send", cmd);
    },
    
    startSpindle: function(speed, level, direction){
