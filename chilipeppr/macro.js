@@ -60,7 +60,7 @@ var myXTCMacro = {
    },
    carousel:{
       enabled: true,
-      center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
+      center:{ x:-200, y:15, z: -5, r:90 },  // center of carousel and radius of the diameter center circle
       servo: { 
          // please test with ./blocktest.js to find perfect parameters
          block:   125,   // arc in degress to block the spindle shaft 
@@ -295,7 +295,7 @@ var myXTCMacro = {
 
       // add a rule if startSpindleSlow event happend
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, atcparams.forward, atcparams.level) );
+         .done( this.startSpindle.bind(this, atcparams.slow) );
 
       // register the event for updateAxesFromStatus, 
       // the cool thing this event will only one time fired :)
@@ -411,7 +411,7 @@ var myXTCMacro = {
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, atcparams.forward, atcparams.level) );
+         .done( this.startSpindle.bind(this, atcparams.slow, atcparams.level) );
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
@@ -578,11 +578,11 @@ var myXTCMacro = {
       this.send(cmd, this.serialPortXTC);
 
       console.log('ATC spindle', cmd);
-
+      var that = this;
       if(level > 0)
          setTimeout(function(){
             var cmd = "lev " + level;
-            this.send(cmd, this.serialPortXTC);
+            that.send(cmd, this.serialPortXTC);
          }, 500);
    },
 

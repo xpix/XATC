@@ -41,6 +41,7 @@ function setXTCParams(macro){
   // here you can set your Parameters
    macro.serialPortXTC =   "/dev/ttyUSB1";   // XTC Controler
    macro.addressServo =    "192.168.1.135";      // Networkaddress of Servoc ESP8266 Controller
+   macro.atcParameters.safetyHeight = 27;
    macro.carousel = {
       enabled: true,
       center:{ x:-206.8, y:73.7, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
