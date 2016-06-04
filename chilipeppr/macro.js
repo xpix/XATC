@@ -54,7 +54,7 @@ var myXTCMacro = {
          level:         800,  // the current level in mA where the spindle will break
          revlevel:      -3000,// the reverse level in mA where the spindle will break
          slow:          60,   // value for minimum rpm
-         safetyHeight:  35,   // safety height
+         safetyHeight:  27,   // safety height
          feedRate:      300,  // Feedrate to move over the catch cable
          nutZ:          -7,   // safety deep position of collet in nut
    },
@@ -487,8 +487,7 @@ var myXTCMacro = {
       $.when( startSpindleSlow, startBlocker )
          .done( function(){
             that.servo( 
-               that.carousel.servo.block, 
-               that.send.bind(that, that.resume)
+               that.carousel.servo.block
             );
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
@@ -510,7 +509,10 @@ var myXTCMacro = {
       // deblock spindle at end of arc move
       var deBlocker = $.Deferred();
       $.when( deBlocker )
-         .done( this.servo.bind(this, this.carousel.servo.unblock) );
+         .done( function(){
+            that.servo(that.carousel.servo.unblock);      
+            that.stopSpindle();
+         });
       this.events.push({ x: this.darc.XEnd,  y: this.darc.YEnd,  z:torqueSpindleZPos,
          event: deBlocker,
          comment: 'Move servo to deblock spindle shaft.',
