@@ -542,14 +542,17 @@ var myXTCMacro = {
    },
 
    servo: function(pos, callback){
-      $.get( 'http://' +this.addressServo +'/target', { value: this.carousel.servo.target } )
+      $.get( 'http://' +this.addressServo +'/servo', { position: pos, target: this.carousel.servo.target } )
          .done(function( data ) {
-            $.get( 'http://' +this.addressServo +'/servo', { value: pos } )
-               .done(function( data ) {
-                  callback();
-                  console.log('ATC Servo get called', data);
-               });
+              console.log('ATC Servo called to block.', data);
+               callback();
+         })
+         .fail(function( data ) {
+              alert("FAILED: Machine is in feedhold mode!");
+              console.log('ATC Servo FAILED to block.', data);
          });
+
+
    },
 
    
