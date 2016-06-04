@@ -545,7 +545,8 @@ var myXTCMacro = {
       $.get( 'http://' +this.addressServo +'/servo', { position: pos, target: this.carousel.servo.target } )
          .done(function( data ) {
               console.log('ATC Servo called to block.', data);
-               callback();
+              if($.type(callback) == 'function')
+                  callback();
          })
          .fail(function( data ) {
               alert("FAILED: Machine is in feedhold mode!");
