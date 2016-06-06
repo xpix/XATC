@@ -381,12 +381,7 @@ var myXTCMacro = {
       cmd += "G4 P2\n"; // wait some second's for screw/unscrew event
 
       // Add gcode and events for the XATC carousel
-      if(art == 'screw'){
-         cmd += this.torqueMove(nutZ, holder, atcparams);
-      } 
-      else {
-         cmd += this.looseMove(nutZ, holder, atcparams);
-      }
+      cmd += this.torqueMove(nutZ, holder, atcparams, art);
 
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
@@ -398,64 +393,8 @@ var myXTCMacro = {
       this.send(cmd);
    },
 
-   looseMove: function(nutZ, holder, atcparams){
-      if(! this.carousel.enabled) 
-         return '';
-
-      var cmd = '';
-
-      // Move to Z-zero + x
-      var startSpindleSlowZPos = 0.3;
-      cmd += "G1 Z" + startSpindleSlowZPos + "\n";
-      cmd += "G4 P1\n"; // wait some second's for start rotate spindle
-
-      var startSpindleSlow = $.Deferred();
-      $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, atcparams.slow, atcparams.level) );
-      this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
-         event: startSpindleSlow,
-         comment: 'Start spindle slow for blocking.',
-      });
-      
-      // block spindle via servo
-      var startBlocker = $.Deferred();
-      $.when( startSpindleSlow, startBlocker )
-         .done( this.servo.bind(this, this.carousel.servo.block) );
-      this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
-         event: startBlocker,
-         comment: 'Move servo to block spindle shaft.',
-      });
-      
-      var torqueSpindleZPos = (nutZ+0.2);
-      
-      // move to nutZ+x cuz no tighten in this moment
-      cmd += "G1 Z" + torqueSpindleZPos + "\n"; 
-      
-      // move an torqueDegrees(°) arc CW
-      var theta1   = holder.deg + this.carousel.torqueDegrees;
-      var theta2   = holder.deg;
-      cmd += this.arc('G2', theta1, theta2);
-      cmd += "G4 P2\n";
-      
-      // deblock spindle at end of arc move
-      var deBlocker = $.Deferred();
-      $.when( deBlocker )
-         .done( this.servo.bind(this, this.carousel.servo.unblock) );
-      this.events.push({ x: this.darc.XEnd,  y: this.darc.YEnd,  z:torqueSpindleZPos,
-         event: deBlocker,
-         comment: 'Move servo to deblock spindle shaft.',
-      });
-
-      // move an ~90° arc CCW, back to original position
-      theta1   = holder.deg;
-      theta2   = holder.deg + this.carousel.torqueDegrees;
-      cmd += this.arc('G3', theta1, theta2);
-
-      return cmd;
-   },
-
-
-   torqueMove: function(nutZ, holder, atcparams){
+   torqueMove: function(nutZ, holder, atcparams, art){
+      art = (art == 'screw' ? true : false);
       if(! this.carousel.enabled) 
          return '';
 
@@ -469,7 +408,7 @@ var myXTCMacro = {
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, this.atcParameters.slow, 0, 'bwd') );
+         .done( this.startSpindle.bind(this, this.atcParameters.slow, 0, (art ? 'bwd' : 'fwd') ) );
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
@@ -503,6 +442,8 @@ var myXTCMacro = {
       // move an torqueDegrees(°) arc CW
       var theta1   = holder.deg;
       var theta2   = holder.deg + this.carousel.torqueDegrees;
+      if(! art)
+          theta2   = holder.deg - this.carousel.torqueDegrees;
       cmd += this.arc('G3', theta1, theta2);
       cmd += "G4 P2\n";
       
@@ -520,6 +461,8 @@ var myXTCMacro = {
 
       // move an ~90° arc CCW, back to original position
       theta1   = holder.deg + this.carousel.torqueDegrees;
+      if(! art)
+          theta1   = holder.deg - this.carousel.torqueDegrees;
       theta2   = holder.deg;
       cmd += this.arc('G2', theta1, theta2);
 
