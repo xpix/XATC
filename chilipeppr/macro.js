@@ -464,22 +464,25 @@ var myXTCMacro = {
       if(! art)
           theta1   = holder.deg - this.carousel.torqueDegrees;
       theta2   = holder.deg;
-      cmd += this.arc('G2', theta1, theta2);
+      cmd += this.arc('G2', theta1, theta2, holder);
 
       return cmd;
    },
    
-   arc:function(mode, theta1, theta2){
+   arc:function(mode, theta1, theta2, holder){
       this.darc = {};
 
       theta1 = theta1*(Math.PI/180); // calculate in radians
       theta2 = theta2*(Math.PI/180); // calculate in radians
 
+      var xc = (holder.posX > 0 ? holder.posX-carousel.r : holder.posX+carousel.r);
+      var yc = (holder.posY > 0 ? holder.posY-carousel.r : holder.posY+carousel.r);
+
       var carousel = this.carousel.center;
       // calculate the arc move, from center of carousel
       // http://www.instructables.com/id/How-to-program-arcs-and-linear-movement-in-G-Code-/?ALLSTEPS
-      var xe   = (carousel.r*Math.cos(theta2)).toFixed(2);   // Xc+(R*cos(Theta2))
-      var ye   = (carousel.r*Math.sin(theta2)).toFixed(2);   // Yc+(R*sin(Theta2))
+      var xe   = (xc+(carousel.r*Math.cos(theta2))).toFixed(2);   // Xc+(R*cos(Theta2))
+      var ye   = (yc+(carousel.r*Math.sin(theta2))).toFixed(2);   // Yc+(R*sin(Theta2))
 
       this.darc = {XEnd: xe, YEnd: ye};
 
@@ -562,7 +565,7 @@ var myXTCMacro = {
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
       // tighten process (TODO: use level)
-      this.send("fwd 100 250", this.serialPortXTC);
+      this.send("fwd 400 500 8000", this.serialPortXTC);
 
       // set tool in use
       this.toolinuse = this.toolnumber;
