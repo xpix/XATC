@@ -444,7 +444,7 @@ var myXTCMacro = {
       var theta2   = holder.deg + this.carousel.torqueDegrees;
       if(! art)
           theta2   = holder.deg - this.carousel.torqueDegrees;
-      cmd += this.arc('G3', theta1, theta2);
+      cmd += this.arc('G3', theta1, theta2, holder);
       cmd += "G4 P2\n";
       
       // deblock spindle at end of arc move
