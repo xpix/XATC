@@ -416,7 +416,7 @@ var myXTCMacro = {
       
       var blockSpindlePos = 0.3;
       cmd += "G1 F10 Z" + blockSpindlePos + "\n";
-      cmd += "F1500\n"; // set Feedrate for screw process
+      cmd += "F500\n"; // set Feedrate for screw process
       cmd += "G4 P2\n"; // wait some second's for start rotate spindle
       //cmd += this.feedhold + "\n"; // feedhold the machine and wait to resume
 
@@ -469,18 +469,14 @@ var myXTCMacro = {
       return cmd;
    },
    
-   arc:function(mode, theta1, theta2, holder){
+   arc:function(mode, th1, th2, holder){
       this.darc = {};
 
-      theta1 = theta1*(Math.PI/180); // calculate in radians
-      theta2 = theta2*(Math.PI/180); // calculate in radians
+      var theta1 = th1*(Math.PI/180); // calculate in radians
+      var theta2 = th2*(Math.PI/180); // calculate in radians
       var carousel = this.carousel.center;
 
       var xc = 0, yc = 0;
-      if(holder.posX)
-            xc = (holder.posX > 0 ? holder.posX-carousel.r : holder.posX+carousel.r);
-      if(holder.posY)
-            yc = (holder.posY > 0 ? holder.posY-carousel.r : holder.posY+carousel.r);
 
       // calculate the arc move, from center of carousel
       // http://www.instructables.com/id/How-to-program-arcs-and-linear-movement-in-G-Code-/?ALLSTEPS
