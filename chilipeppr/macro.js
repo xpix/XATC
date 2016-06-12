@@ -157,14 +157,13 @@ var myXTCMacro = {
           this.axis.z = this.rd( axis.z );
       }
 
-      console.log("ATC updateAxesFromStatus. data:", this.axis);
-
       var that = this;
 
       // check all events and compare the axis states with event states
       // if has the event xyz the same (rounded to X.1) values as the actual position
       // then fire up the planned event
       this.events.forEach(function(entry){
+         console.log("ATC updateAxesFromStatus. data:", that.axis);
          if(entry.event.state() != 'resolved' 
             && that.rd(entry.x) == that.axis.x 
             && that.rd(entry.y) == that.axis.y 
@@ -466,6 +465,22 @@ var myXTCMacro = {
       theta2   = holder.deg;
       cmd += this.arc((screw ? 'G2' : 'G3'), theta1, theta2, holder);
 
+      // unscrew with a short powerfull backward rotate 
+      // to let the endmill in holder
+      if(! screw){
+            var powerbwdPos = (nutZ-0.3);
+            cmd += "G1 Z" + powerbwdPos + "\n"; 
+            cmd += "G4 P2\n";
+
+            var PowerBWD = $.Deferred();
+            $.when( PowerBWD )
+               .done( this.startSpindle.bind(this, "200 50", 0, 'bwd') );
+            this.events.push({ x:holder.posX,  y:holder.posY,  z:powerbwdPos,
+               event: PowerBWD,
+               comment: 'Powerfull backward to let endmill in spindle.',
+            });
+      }
+
       return cmd;
    },
    
@@ -516,10 +531,15 @@ var myXTCMacro = {
       console.log('ATC SEND: ', command, port);
    },
    
-   startSpindle: function(speed, level, direction){
+   startSpindle: function(speed, level, direction, time){
       if(direction === undefined)
             direction = 'fwd';
+      if(time === undefined)
+            time = '0';
+
       var cmd = direction + " " + speed; 
+      if(time > 0)
+            cmd += " " + time;
       this.send(cmd, this.serialPortXTC);
 
       console.log('ATC spindle', cmd);
@@ -552,7 +572,7 @@ var myXTCMacro = {
       
       // unscrew process
       // rotate backward with more power(+50) as the tight process    
-      this.send("bwd 400 100", this.serialPortXTC);
+      // this.send("bwd 400 100", this.serialPortXTC);
 
       // unset tool in use
       this.toolinuse = 0;
@@ -564,7 +584,7 @@ var myXTCMacro = {
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
       // tighten process (TODO: use level)
-      this.send("fwd 400 500 8000", this.serialPortXTC);
+      this.send("fwd 400 500", this.serialPortXTC);
 
       // set tool in use
       this.toolinuse = this.toolnumber;
