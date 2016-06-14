@@ -222,12 +222,21 @@ var myXTCMacro = {
    toolsDatabase: function(){
    	var gcodelines = this.obj3d.userData.lines;
    	// Loop thru lines to see if comment mark for tdb happend
+      this.toolsdatabase = []; 
    	for (var i = 0; i < 100; i++) {
    		var line = gcodelines[i];
-         console.log('ATC gcode line', line);
-   	}      
-   },
-
+         if(line.isFake && line.match(/T(\d+)\:\s*(\S*)\s+(\S+)/)){
+          this.toolsdatabase.push({
+             number:    parseInt(RegExp.$1, 10),
+             type:      RegExp.$2,
+             size:      parseFloat(RegExp.$3)
+          });
+         }
+      }
+      console.log('ATC toolsdatabase', this.toolsdatabase);
+      return this.toolsdatabase;
+   },      
+   
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.MeshBasicMaterial({
