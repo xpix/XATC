@@ -136,6 +136,7 @@ var myXTCMacro = {
       // drawHolders again after gcode load
       setTimeout(function(){
          this.drawHolders();
+         this.toolsDatabase();
       }, 1000);
    },
    onStateChanged: function(state){
