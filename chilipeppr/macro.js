@@ -225,7 +225,8 @@ var myXTCMacro = {
       this.toolsdatabase = []; 
    	for (var i = 0; i < 100; i++) {
    		var line = gcodelines[i];
-         if(line.isFake && line.match(/T(\d+)\:\s*(\S*)\s+(\S+)/)){
+        console.log('ATC line', line);
+         if(line !== undefined && line.args.text.match(/T(\d+)\:\s*(\S*)\s+(\S+)/)){
           this.toolsdatabase.push({
              number:    parseInt(RegExp.$1, 10),
              type:      RegExp.$2,
