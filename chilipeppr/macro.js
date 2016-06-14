@@ -243,9 +243,12 @@ var myXTCMacro = {
       if(! this.toolsdatabase.length)
          return;
       
-      var table = '<table class="table table-striped table-bordered"><thead class="thead-default"><tr><th>Holder</th><th>Type</th><th>Size</th></tr></thead><tbody>';
+      var table = '<table class="table table-bordered"><thead class="thead-default"><tr><th>Holder</th><th>Type</th><th>Size</th></tr></thead><tbody>';
       this.toolsdatabase.forEach(function(tool){
-         table += '<tr class="' + (tool.number == take ? 'table-success' : (tool.number == bring ? 'table-warning' : '') ) + '"><th scope="row">T'+ tool.number + '</td><td>'+ tool.type + '</td><td align="right" char=".">'+ tool.size.toFixed(1) + ' mm</td></tr>';   
+         table += '<tr bgcolor="' 
+            + (tool.number == take ? '#DDFFDD' : (tool.number == bring ? '#FFFFDD' : '') ) 
+            + '"><td>T'+ tool.number + '</td><td>'+ tool.type + '</td><td align="right" char=".">'
+            + tool.size.toFixed(1) + ' mm</td></tr>';   
       });
       table += '</tr></tbody></table>';
 
