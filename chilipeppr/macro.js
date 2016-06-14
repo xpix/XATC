@@ -115,6 +115,9 @@ var myXTCMacro = {
           // when we get here, we've got the 3d obj 
           console.log('ATC 3dobj loading');
           this.drawHolders();
+          
+          console.log('ATC get tool database');
+          this.toolsDatabase();
       });
       
       this.servo(this.carousel.servo.unblock);
@@ -213,6 +216,15 @@ var myXTCMacro = {
          this.obj3d.remove(this.mySceneGroup);
          this.obj3dmeta.widget.wakeAnimate();
       }
+   },
+
+   toolsDatabase: function(){
+   	var gcodelines = this.obj3d.userData.lines;
+   	// Loop thru lines to see if comment mark for tdb happend
+   	for (var i = 0; i < 100; i++) {
+   		var line = gcodelines[i];
+         console.log('ATC gcode line', line);
+   	}      
    },
 
    drawHolders: function(blength, bwidth) {
