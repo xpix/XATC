@@ -137,6 +137,7 @@ var myXTCMacro = {
       setTimeout(function(){
          this.drawHolders();
          this.toolsDatabase();
+         this.displayTools(0, 0);
       }, 1000);
    },
    onStateChanged: function(state){
@@ -237,6 +238,20 @@ var myXTCMacro = {
       console.log('ATC toolsdatabase', this.toolsdatabase);
       return this.toolsdatabase;
    },      
+
+   displayTools: function(){
+      if(! this.toolsdatabase.length)
+         return;
+      
+      var table = '<table><th>Nr.</th><th>Type</th><th>Size(mm)</th>';
+      this.toolsdatabase.forEach(function(tool){
+         table += '<tr><td>'+ tool.number + '</td><td>'+ tool.type + '</td><td>'+ tool.size + '</td></tr>';   
+      });
+      table += '</tr></table>';
+
+      if(table !== undefined)
+         chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XATC Tools Database", table);
+   },
    
    drawHolders: function(blength, bwidth) {
 
