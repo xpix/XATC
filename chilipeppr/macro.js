@@ -239,18 +239,18 @@ var myXTCMacro = {
       return this.toolsdatabase;
    },      
 
-   displayTools: function(){
+   displayTools: function(take, bring){
       if(! this.toolsdatabase.length)
          return;
       
-      var table = '<table><th>Nr.</th><th>Type</th><th>Size(mm)</th>';
+      var table = '<table class="table table-striped table-bordered"><thead class="thead-default"><tr><th>Holder</th><th>Type</th><th>Size</th></tr></thead><tbody>';
       this.toolsdatabase.forEach(function(tool){
-         table += '<tr><td>'+ tool.number + '</td><td>'+ tool.type + '</td><td>'+ tool.size + '</td></tr>';   
+         table += '<tr class="' + (tool.number == take ? 'table-success' : (tool.number == bring ? 'table-warning' : '') ) + '"><th scope="row">T'+ tool.number + '</td><td>'+ tool.type + '</td><td align="right" char=".">'+ tool.size.toFixed(1) + ' mm</td></tr>';   
       });
-      table += '</tr></table>';
+      table += '</tr></tbody></table>';
 
       if(table !== undefined)
-         chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XATC Tools Database", table);
+         chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "<b>XATC Tools Database</b>", table, 5000);
    },
    
    drawHolders: function(blength, bwidth) {
