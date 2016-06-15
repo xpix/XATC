@@ -102,6 +102,9 @@ var myXTCMacro = {
       // store macro in window object so we have it next time thru
       window["myXTCMacro"] = this;
 
+      // remove macro buttons
+      $('#com-chilipeppr-widget-macro .panel-heading .mymacrobtns').remove();
+
       // Check for Automatic Toolchange Command
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
@@ -118,6 +121,8 @@ var myXTCMacro = {
           
           console.log('ATC get tool database');
           this.toolsDatabase();
+          
+          this.addBtn();
       });
       
       this.servo(this.carousel.servo.unblock);
@@ -219,6 +224,17 @@ var myXTCMacro = {
          this.obj3dmeta.widget.wakeAnimate();
       }
    },
+
+	addBtn: function() {
+		var btnGrp = $('<div class="btn-group pull-right mymacrobtns" style="margin-right:6px;"></div>');
+		var btn1 = $('<button type="button" class="btn btn-xs btn-default mymacro-btn1">1</button>');
+      var that = this;
+		btn1.click(function(){
+		   that.displayTools(that.toolnumber, that.toolinuse);
+		});
+		btnGrp.append(btn1);
+		$('#com-chilipeppr-widget-macro .panel-heading').append(btnGrp);
+	},
 
    toolsDatabase: function(){
    	var gcodelines = this.obj3d.userData.lines;
