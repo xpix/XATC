@@ -259,19 +259,22 @@ var myXTCMacro = {
       if(! this.toolsdatabase.length)
          return;
       
-      var table = '<table class="table table-bordered"><thead class="thead-default"><tr><th>Holder</th><th>Type</th><th>Size</th></tr></thead><tbody>';
+      var table = '<table class="table table-bordered"><thead class="thead-default"><tr><th>Holder</th><th>Type</th><th>Size</th><th>Job</th></tr></thead><tbody>';
       this.toolsdatabase.forEach(function(tool){
+         var icon = (tool.number == take ? 'glyphicon-arrow-right' : (tool.number == bring ? 'glyphicon-arrow-right' : ''));
          table += '<tr bgcolor="' 
             + (tool.number == take ? '#DDFFDD' : (tool.number == bring ? '#FFFFDD' : '') ) 
             + '"><td>T'+ tool.number + '</td><td>'+ tool.type + '</td><td align="right" char=".">'
-            + tool.size.toFixed(1) + ' mm</td></tr>';   
+            + tool.size.toFixed(1) + ' mm</td>'
+            + '<td><span class="glyphicon ' + icon + '" aria-hidden="true"></td>'
+            + '</tr>';   
       });
       table += '</tr></tbody></table>';
 
       if(table !== undefined)
          chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "<b>XATC Tools Database</b>", table, 5000);
    },
-   
+      
    drawHolders: function(blength, bwidth) {
 
       var material = new THREE.MeshBasicMaterial({
