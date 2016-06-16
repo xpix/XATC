@@ -18,7 +18,8 @@ the tool. Here the flow:
       * move to holder with toolnumber == 1
       * set spindle speed and level
       * move down in the nut
-      * loose the nut with full power and negative current sense 
+      * describe an arc in CW direction with +carousel.tourqueDegrees
+      * loose the nut with full power for 200 
          (i.e: -4000, if the current fall under 4Ampere then stop)
       * got to safety height   
    * get the next toolnumber(T2)
@@ -51,44 +52,48 @@ var myXTCMacro = {
    serialPortXTC:    "/dev/ttyUSB2",   // Spindle DC Controler
    addressServo:     "127.0.0.1",      // Networkaddress of Servoc ESP8266 Controller
    atcParameters: {
-         level:         800,  // the current level in mA where the spindle will break
-         revlevel:      -3000,// the reverse level in mA where the spindle will break
          slow:          60,   // value for minimum rpm
          safetyHeight:  27,   // safety height
-         feedRate:      300,  // Feedrate to move over the catch cable
+         feedRate:      300,  // Feedrate to move to scew position
          nutZ:          -5,   // safety deep position of collet in nut
+         loose:{               
+            speed: 200,       // after unscrew the collet,  params to rotate the spindle shaft with X speed ... 
+            time:   50,       // ... for X time (in milliseconds) to loose the collet complete
+         },
    },
    carousel:{
       enabled: true,
-      center:{ x:-200, y:15, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
+      center:{ x:-200, y:15, r:45 },  // center of carousel and radius of the diameter center circle
       servo: { 
          // please test with ./blocktest.js to find perfect parameters
          block:   125,   // arc in degress to block the spindle shaft 
          unblock: 60,    // arc in degress to deblock the spindle shaft 
-         target:  478,   // target value readed at pin A0 on ESP to get the actual position
+         target:  478,   /* target value readed at pin A0 on ESP to 
+                            get the actual correct block position
+                            it's just an option */
          level:   2500,  // level in mA to break spindle at ~2.5 Ampere
       }, // position values are in degress
-      torqueDegrees: 90,              // maximum arc degrees to torque collet
+      torqueDegrees: 45, /* IMPORTANT: maximum arc degrees to torque collet 
+                            This value set the maximum torque on  ER-collet-nut, too high 
+                            values can result in loose steps of motors or destroy your machine
+                         */
    },
    atcMillHolder: [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
-      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 360},     // first endmill holder
-      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},    // second endmill holder
-      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},    // third endmill holder
-      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // forth endmill holder
-      {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
-      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // 6. endmill holder
-      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},   // 7. endmill holder
-      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},   // 8. endmill holder
+      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 360},  // first endmill holder
+      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 400, time: 500, deg: 315},  // second endmill holder
+      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 400, time: 500, deg: 270},  // third endmill holder
+      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 400, time: 500, deg: 225},  // forth endmill holder
+      {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 180},  // 5. endmill holder
+      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 400, time: 500, deg: 135},  // 6. endmill holder
+      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 400, time: 500, deg: 90},   // 7. endmill holder
+      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 400, time: 500, deg: 45},   // 8. endmill holder
       // etc.pp
    ],
-   feedRate: 100,
    toolnumber: 0,
    toolinuse: 0,
    axis: {x:0, y:0, z:0},
-   feedhold: '!',
-   resume:   '~',
    events: [],
    init: function() {
       // Uninit previous runs to unsubscribe correctly, i.e.
@@ -480,7 +485,6 @@ var myXTCMacro = {
       cmd += "G1 F10 Z" + blockSpindlePos + "\n";
       cmd += "F500\n"; // set Feedrate for screw process
       cmd += "G4 P2\n"; // wait some second's for start rotate spindle
-      //cmd += this.feedhold + "\n"; // feedhold the machine and wait to resume
 
       // block spindle via servo 
       // and call resume after success block
@@ -537,7 +541,7 @@ var myXTCMacro = {
 
             var PowerBWD = $.Deferred();
             $.when( PowerBWD )
-               .done( this.startSpindle.bind(this, "200 50", 0, 'bwd') );
+               .done( this.startSpindle.bind(this, this.atcParameters.loose.speed +" "+ this.atcParameters.loose.time, 0, 'bwd') );
             this.events.push({ x:holder.posX,  y:holder.posY,  z:powerbwdPos,
                event: PowerBWD,
                comment: 'Powerfull backward to let endmill in spindle.',
@@ -631,11 +635,6 @@ var myXTCMacro = {
    atc_unscrew: function(){
       // ok action == moved, now we can loose nut and move the machine 
       console.log('ATC called: ', 'atc_unscrew');
-      var holder = this.atcMillHolder[ (this.toolinuse-1)];
-      
-      // unscrew process
-      // rotate backward with more power(+50) as the tight process    
-      // this.send("bwd 400 100", this.serialPortXTC);
 
       // unset tool in use
       this.toolinuse = 0;
@@ -647,7 +646,7 @@ var myXTCMacro = {
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
       // tighten process (TODO: use level)
-      this.send("fwd 400 500", this.serialPortXTC);
+      this.send("fwd "+ holder.tourque+" "+ holder.time, this.serialPortXTC);
 
       // set tool in use
       this.toolinuse = this.toolnumber;
