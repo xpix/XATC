@@ -37,8 +37,6 @@ int currentEvent;
 int debugEvent;
 int speed;
 int saved_speed;
-bool dir;
-bool saved_dir; // true = fwd, false = backward
 
 SerialCommand SCmd;        // The SerialCommand object
 DualVNH5019MotorShield md;
@@ -48,7 +46,6 @@ Timer timer;               // The timer object
 // fwd 400 500
 void spindle_forward()
 {
-  dir   = true;
   speed = defaultSpeed;
 
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
@@ -73,7 +70,6 @@ void spindle_forward()
 // bwd 400 500
 void spindle_backward()
 {
-  dir   = false;
   speed = (0 - defaultSpeed);
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
   if (arg != NULL)      // As long as it existed, take it
@@ -204,19 +200,13 @@ void set_led(){
 }
 
 void spindle_save(){
-  saved_dir   = dir;
   saved_speed = speed;
   ok();
 }
 
 void spindle_remember(){
-  if(saved_dir){
-    spindle_forward();
-  } else {
-    spindle_backward();
-  }
+  spindle_forward();
   saved_speed = 0;
-  saved_dir = true;
   ok();
 }
 
