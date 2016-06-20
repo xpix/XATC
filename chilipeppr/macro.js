@@ -232,7 +232,7 @@ var myXTCMacro = {
 
 	addBtn: function() {
 		var btnGrp = $('<div class="btn-group pull-right mymacrobtns" style="margin-right:6px;"></div>');
-		var btn1 = $('<button type="button" class="btn btn-xs btn-default mymacro-btn1"><span class="glyphicons glyphicons-database"/></button>');
+		var btn1 = $('<button type="button" class="btn btn-xs btn-default mymacro-btn1"><span class="glyphicon glyphicon-database"/></button>');
       var that = this;
 		btn1.click(function(){
 		   that.displayTools(that.toolnumber, that.toolinuse);
