@@ -478,7 +478,7 @@ var myXTCMacro = {
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
          .done( function(){
-            this.startSpindle(this.atcParameters.slow, this.carousel.servo.level, (screw ? 'bwd' : 'fwd')); 
+            that.startSpindle(that.atcParameters.slow, that.carousel.servo.level, (screw ? 'bwd' : 'fwd')); 
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
@@ -499,10 +499,10 @@ var myXTCMacro = {
             setTimeout(function(){
                // maybe we call 200ms later a slow spindle spin 
                // in the opposite direction, for perfect fit of wrench?
-               this.startSpindle(this.atcParameters.slow, 500, (screw ? 'fwd' : 'bwd')); 
+               that.startSpindle(that.atcParameters.slow, 500, (screw ? 'fwd' : 'bwd')); 
                // then back the original direction to press the spindle in wrench for magic move :)
                setTimeout(function(){
-                  this.startSpindle(this.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
+                  that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
                }, 300);
             }, 200);
          });
