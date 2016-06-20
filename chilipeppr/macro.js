@@ -578,7 +578,6 @@ var myXTCMacro = {
                   callback();
          })
          .fail(function( data ) {
-              alert("FAILED: Machine is in feedhold mode!");
               console.log('ATC Servo FAILED to block.', data);
          });
 
