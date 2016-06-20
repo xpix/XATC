@@ -314,6 +314,8 @@ var myXTCMacro = {
 
       this.servo(this.carousel.servo.unblock);
 
+      this.spindleStatus(); // remember on last spindle rpm
+
       this.toolnumber = data.toolnumber;
       this.events = [];
 
@@ -475,7 +477,9 @@ var myXTCMacro = {
 
       var startSpindleSlow = $.Deferred();
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, this.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd') ) );
+         .done( function(){
+            this.startSpindle(this.atcParameters.slow, this.carousel.servo.level, (screw ? 'bwd' : 'fwd')); 
+         });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
@@ -487,13 +491,20 @@ var myXTCMacro = {
       cmd += "G4 P2\n"; // wait some second's for start rotate spindle
 
       // block spindle via servo 
-      // and call resume after success block
+      // we "shake" spindle for a short time to have a perfect "catched" wrench
       var startBlocker = $.Deferred();
       $.when( startSpindleSlow, startBlocker )
          .done( function(){
-            that.servo( 
-               that.carousel.servo.block
-            );
+            that.servo( that.carousel.servo.block );
+            setTimeout(function(){
+               // maybe we call 200ms later a slow spindle spin 
+               // in the opposite direction, for perfect fit of wrench?
+               this.startSpindle(this.atcParameters.slow, 500, (screw ? 'fwd' : 'bwd')); 
+               // then back the original direction to press the spindle in wrench for magic move :)
+               setTimeout(function(){
+                  this.startSpindle(this.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
+               }, 300);
+            }, 200);
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
          event: startBlocker,
@@ -596,6 +607,15 @@ var myXTCMacro = {
       }
       console.log('ATC SEND: ', command, port);
    },
+
+   spindleStatus: function(type){
+      // save the last spindle status
+      if(type === undefined)
+         this.send('sav', this.serialPortXTC);
+      // save the last spindle status
+      else if(type === 'rem')
+         this.send('rem', this.serialPortXTC);
+   },
    
    startSpindle: function(speed, level, direction, time){
       if(direction === undefined)
@@ -662,7 +682,7 @@ var myXTCMacro = {
       }
       chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
 
-      // this.startSpindle(400, 0); // Restart spindle
+      this.spindleStatus('rem'); // set last saved spindle speed
    },
 };
 // call init from cp 
