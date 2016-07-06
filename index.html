@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>XATC by xpix</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>XATC</h1>
+        <p></p>
+
+        <p class="view"><a href="https://github.com/xpix/XATC">View the Project on GitHub <small>xpix/XATC</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/xpix/XATC/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/xpix/XATC/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/xpix/XATC">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="solution-for-an-automatic-toolchange-xtc" class="anchor" href="#solution-for-an-automatic-toolchange-xtc" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Solution for an automatic toolchange XTC</h1>
+
+<h1>
+<a id="description" class="anchor" href="#description" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Description</h1>
+
+<p>For my XDisPlace project i try to find a solution to bring all processes together. I wrote a ToDo what i need to bring this project to fly. I realized, all what i need it's only to find a solution for an Automatic Tool Changer (ATC).</p>
+
+<p><img src="https://lh3.googleusercontent.com/hJQ62omTeoFyo_g-iEoer4g-bX4MI_faNayzBDcgYmb5MXoNdrYOjGyU6H6BM-zRHPP4iZsEpLAsiJ4kWKxMED0UEnBkswWeHk1lf4gjEVPSBChhVWfMXu2Pq7LBoScjsVigO1ncac6EFLbz6TS4JzGaeNvrE1yW20GngXDywDwUCTZXwYJFTd0mXhfR_RpTnoG-cKBxrhTFX2z0-Ny5FyIM0X_tfB4QXmAlxlGAgMMMbEYeHX8ujfmG2eYKIdZDDY6tMc36ubm3tBbufcwIMUKkv1WwpP5XCBVXEyZtxczhxO9NNgBX2IujIDK0AHd3TqaQuNCldbPOPtPPUTGJygbpUeO3B7C-4YJCpgdpUBmeCD37skRINmUSGnzdPqgGmJpDPecfxDTJaR_tsoe-1am0EqKdWqXFlYVn3eTGXmlH38l5OZY7F4NcezP1ec6pjRkrezuvGCC4Z6pmuR5vxixiXfqwaz_pnXxGjmKMtCDqJqXPx03EgAw_pb-jzKF_TENrgFxnhomxIh0y2F-C750PXT_Is1ZiJhXsxQher2OX5T_XcfFlHJB54Kr2jD4deg5qNQ=w1319-h989-no" alt="XDisPlace"></p>
+
+<p>I'm proud to present my XTC (eXtremly simple automatic Tool Changer). The most ATC's for spindles cost around up to 2500 and more bucks. For me it's to expensive and i play a small braingame "If it possible to make this process more simple and cheaper?" and the Answer is "yes!". I use only some standard elements with a special DC Motor Driver.</p>
+
+
+
+<p>This DC Motor driver comes from Polulu and his some nice Features. We can measure the actual current and rotate the DC motor forward or backward. A simple but nice feature, we can control the speed in both direction and can break the spindle immediatly. Here you see my first prototype, the dc driver are connected to an arduino and i wrote a small program to control all features from driver via a serial console.</p>
+
+<p>Foto from Arduino+DC Driver with connected Spindle.</p>
+
+<p>The commands are easy, you can send "help" and you get all possible commands, the first one are forward and backward. This commands understand the speed parameter from zero to 400, as second parameter you can give the time in milliseconds. Ok, in example. You want to drive the spindle forward with full power but only for 1 second. Please input "fwd 400" for forward full power and as second "1000" miliseconds. Here the result ... Another very nice command are brk, that's a ACTIVE Break. Ok, we drive our spindle with full power and after that we break this with "brk". Cool or?</p>
+
+<p>Screenshot cp serial console</p>
+
+<p>Now comes the realy cool thing, with "lev" we can set the level of current. You start the spindle and try to stop with ur Hand, the current will go up, if the current higher as the level the spindle will stop immediatly. With other words, will something the spindle stress then he break in this moment. Why we need this, well .. wait a minute :)</p>
+
+<p>"tim" stays for time and let the motor stop after some milliseconds, i.e. bwd 200\ntim 500\n let the spindle rotate backwards and break after 500ms.</p>
+
+<p>"dbg" are for debugging, you can start and stop a logging for all parameters. Yue will see every 250 milliseconds the actual data from DC Controller.</p>
+
+<p>Now i wrote a some lines in my XDisPlace Macro to control | Chilipeppr, second camera to CNC machine</p>
+
+<p>Now i want to present the holder for the tool socket. Here you see all my try's, i designed this holder with Fusion360 a very cool program. Maybe i will make a videosession about this great piece of Software. To produce this holder, i use the website 3dhubs.com. It's easy to upload your design as STL File and choose a friend not so far from you and he print this for some bucks. I have to say a big thank you to Jan, he produce my prototype as he fast he can and in a very good quality.</p>
+
+<p>To build a platform for this holders are easy, get a piece of MDF and mark the holes for some screws on the right position. Drill some holes for M5 Screws and screw this platform on the alumium profile.</p>
+
+<p>Now we can first glue our Holders to this new platform. I use my favorite double glue tape and put a small piece on the downside off every holder. We need a very accurate position for every holder, put a broken endmill in your spindle collet. Home your machine and move the machine to every position you like, i note all the position in my notebook.</p>
+
+<p>As the CNC3040 was delivered, i found an endmill with a cut diameter of 3.175. This we can use to make the holder endmill hole more accurate. Use a drill press and drill this hole, after drill we can compare the outsidediameter with a broken endmill shaft.</p>
+
+<p>I called this little white plastic pre-position thing "Stopper", you see that's only a milled piece of POM or Delrin. This material is easy to mill and can handle temperature up to 200 degrees. You have to measure very accurate the outsidediameter of you collet nut and use a this as insidediameter + 0.1mm. After that we can press, maybe with a vice, this stopper to our collet nut.</p>
+
+<p>Now begun the hard work, to find the perfect parameters for the xtc was dreadful. My Setup was intresting, i use a macro to process all steps and this watch the position of the machine. At specific position in xyz an event will happend. I.e. rotate the spindle or screw the collet and so on. The chrome debugger helps me a lot and i love it. You can add some breakpoints and change the parameter at runtime. The first time i do only dry tests, thats more easy for me to watch the spindle and so on.</p>
+
+<p>On this dry test's i realized i have to screw the holders on this MDF Platform. Ok, drill some holes and do it. The Problem, after that i need again the accurate position. Use an screwd endmill and move the machine to the first holder ... that's it.</p>
+
+<p>Last but no least, a trick to hold the collet vertical inside of the hollow spindle shat. i use a simple springload and screw this together with collet nut.</p>
+
+<p>Here is it, my best moment since a month of hard work. The first successful Toolchnage .. friends i'm so happy ... enjoy this moment :)</p>
+
+<h1></h1>
+
+<p>For my XDisPlace project i try to find a solution to bring all processes together. I wrote a ToDo what i need to bring this project to fly. I realized, all what i need it's only to find a solution for an Automatic Tool Changer (ATC).</p>
+
+<p><img src="https://lh3.googleusercontent.com/hJQ62omTeoFyo_g-iEoer4g-bX4MI_faNayzBDcgYmb5MXoNdrYOjGyU6H6BM-zRHPP4iZsEpLAsiJ4kWKxMED0UEnBkswWeHk1lf4gjEVPSBChhVWfMXu2Pq7LBoScjsVigO1ncac6EFLbz6TS4JzGaeNvrE1yW20GngXDywDwUCTZXwYJFTd0mXhfR_RpTnoG-cKBxrhTFX2z0-Ny5FyIM0X_tfB4QXmAlxlGAgMMMbEYeHX8ujfmG2eYKIdZDDY6tMc36ubm3tBbufcwIMUKkv1WwpP5XCBVXEyZtxczhxO9NNgBX2IujIDK0AHd3TqaQuNCldbPOPtPPUTGJygbpUeO3B7C-4YJCpgdpUBmeCD37skRINmUSGnzdPqgGmJpDPecfxDTJaR_tsoe-1am0EqKdWqXFlYVn3eTGXmlH38l5OZY7F4NcezP1ec6pjRkrezuvGCC4Z6pmuR5vxixiXfqwaz_pnXxGjmKMtCDqJqXPx03EgAw_pb-jzKF_TENrgFxnhomxIh0y2F-C750PXT_Is1ZiJhXsxQher2OX5T_XcfFlHJB54Kr2jD4deg5qNQ=w1319-h989-no" alt="XDisPlace"></p>
+
+<p>I'm proud to present my XTC (eXtremly simple automatic Tool Changer). The most ATC's for spindles cost around up to 2500 and more bucks. For me it's to expensive and i play a small braingame "If it possible to make this process more simple and cheaper?" and the Answer is "yes!". I use only some standard elements with a special DC Motor Driver.</p>
+
+
+
+<p>This DC Motor driver comes from Polulu and his some nice Features. We can measure the actual current and rotate the DC motor forward or backward. A simple but nice feature, we can control the speed in both direction and can break the spindle immediatly. Here you see my first prototype, the dc driver are connected to an arduino and i wrote a small program to control all features from driver via a serial console.</p>
+
+<p>Foto from Arduino+DC Driver with connected Spindle.</p>
+
+<p>The commands are easy, you can send "help" and you get all possible commands, the first one are forward and backward. This commands understand the speed parameter from zero to 400, as second parameter you can give the time in milliseconds. Ok, in example. You want to drive the spindle forward with full power but only for 1 second. Please input "fwd 400" for forward full power and as second "1000" miliseconds. Here the result ... Another very nice command are brk, that's a ACTIVE Break. Ok, we drive our spindle with full power and after that we break this with "brk". Cool or?</p>
+
+<p>Screenshot cp serial console</p>
+
+<p>Now comes the realy cool thing, with "lev" we can set the level of current. You start the spindle and try to stop with ur Hand, the current will go up, if the current higher as the level the spindle will stop immediatly. With other words, will something the spindle stress then he break in this moment. Why we need this, well .. wait a minute :)</p>
+
+<p>"tim" stays for time and let the motor stop after some milliseconds, i.e. bwd 200\ntim 500\n let the spindle rotate backwards and break after 500ms.</p>
+
+<p>"dbg" are for debugging, you can start and stop a logging for all parameters. Yue will see every 250 milliseconds the actual data from DC Controller.</p>
+
+<p>Now i wrote a some lines in my XDisPlace Macro to control | Chilipeppr, second camera to CNC machine</p>
+
+<h1>
+<a id="links" class="anchor" href="#links" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Links:</h1>
+
+<ul>
+<li>
+<p>Change direction of a spindle, but use SSR's: </p>
+
+<ul>
+<li><p><a href="http://www.exp-tech.de/pololu-g2-high-power-motor-driver-24v13">http://www.exp-tech.de/pololu-g2-high-power-motor-driver-24v13</a></p></li>
+<li><p><a href="http://lab.whitequark.org/notes/2014-06-15/cnc3020t-coolant-pump-and-ccw-rotation/">http://lab.whitequark.org/notes/2014-06-15/cnc3020t-coolant-pump-and-ccw-rotation/</a> </p></li>
+<li><a href="http://playwithrobots.com/dc-motor-driver-circuits/">http://playwithrobots.com/dc-motor-driver-circuits/</a></li>
+<li><a href="http://www.ebay.de/itm/12-24V-180W-High-power-DC-Motor-Driver-Speed-reversing-current-PID-controller-/222009628227">http://www.ebay.de/itm/12-24V-180W-High-power-DC-Motor-Driver-Speed-reversing-current-PID-controller-/222009628227</a></li>
+</ul>
+</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/xpix">xpix</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
