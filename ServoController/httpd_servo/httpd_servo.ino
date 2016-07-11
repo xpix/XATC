@@ -2,8 +2,22 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
-const char* ssid = "Xpix";
-const char* pass = "xpix97ZZ";
+char* ssid = ".........";
+char* pass = ".........";
+
+/* --------------------------------------- */
+
+int position_zero = 60;
+int position  = position_zero;
+int target    = 0;
+int pin       = 5; // Servo pin
+int wait      = 750;
+int readpin   = A0;
+int repeats   = 3;
+int realtarget= 0;
+bool failed   = false;
+
+
 
 /* --------------------------------------- */
 
