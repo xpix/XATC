@@ -23,8 +23,8 @@ DC Controller
 // https://github.com/scogswell/ArduinoSerialCommand
 
 #include "SerialCommand.h"
-//#include "DualVNH5019MotorShield.h"
-#include "DCMController.h"
+#include "DualVNH5019MotorShield.h"
+//#include "DCMController.h"
 #include "Timer.h"
 
 #define arduinoLED 13         // Arduino LED on board
@@ -35,16 +35,74 @@ DC Controller
 int level   = 0;
 int currentEvent;
 int debugEvent;
-
+int speed;
+int saved_speed;
 
 SerialCommand SCmd;        // The SerialCommand object
-DCMController md;          // The motor driver
+DualVNH5019MotorShield md;
+//DCMController md;          // The motor driver
 Timer timer;               // The timer object
 
 // fwd 400 500
 void spindle_forward()
 {
-  int speed = defaultSpeed;
+  speed = defaultSpeed;
+
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg != NULL)      // As long as it existed, take it
+  {
+      speed = atol(arg);
+  }
+  else if(saved_speed) {
+      speed = saved_speed;
+  }
+
+  // Timer parameter 
+  arg = SCmd.next();
+  int timee = 0;
+  if (arg != NULL){
+    timee = atol(arg);
+    callTimer(timee);
+  }
+
+  spindle_status(speed, timee);
+
+  md.setM1Speed(speed);
+  ok();
+}
+
+// bwd 400 500
+void spindle_backward()
+{
+  speed = (0 - defaultSpeed);
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg != NULL)      // As long as it existed, take it
+  {
+      speed = (0 - atol(arg));
+  }
+  else if(saved_speed) {
+      speed = saved_speed;
+  }
+
+  // Timer parameter 
+  arg = SCmd.next();
+  int timee = 0;
+  if (arg != NULL){
+    timee = atol(arg);
+    callTimer(timee);
+  }
+
+  spindle_status(speed, timee);
+
+  md.setM1Speed(speed);
+  ok();
+}
+
+void spindle_jitter()
+{
+  int time = 0;
+  int speed = 0;
+  // Speed parameter 
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
   if (arg != NULL)      // As long as it existed, take it
   {
@@ -54,31 +112,18 @@ void spindle_forward()
   // Timer parameter 
   arg = SCmd.next();
   if (arg != NULL){
-    callTimer(atol(arg));
+    time = atol(arg);
   }
 
-  md.setM1Speed(speed);
-  ok();
-}
+  // jitter one times forward i.e. speed 200 - time 100ms
+  saved_speed = speed;
+  spindle_forward();                      // drive spindle forward
+  timer.after(time, spindle_break);       // 100ms: break spindle
 
-// bwd 400 500
-void spindle_backward()
-{
-  int speed = (0 - defaultSpeed);
-  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
-  if (arg != NULL)      // As long as it existed, take it
-  {
-      speed = (0 - atol(arg));
-  }
-
-  // Timer parameter 
-  arg = SCmd.next();
-  if (arg != NULL){
-    callTimer(atol(arg));
-  }
-
-  md.setM1Speed(speed);
-  ok();
+  // ... and backward
+  saved_speed = (0 - speed);
+  timer.after(time+10, spindle_backward); // 110ms: drive spindle backward
+  timer.after((time*2)+10, spindle_break);// 210ms: break spindle
 }
 
 // brk 300
@@ -90,6 +135,9 @@ void spindle_break()
   {
       breake = atol(arg);
   }
+
+  spindle_status(0, -1);
+  
   md.setM1Brake(breake);
   ok();
 }
@@ -114,7 +162,21 @@ void set_dbg(){
 // sta
 void spindle_status()
 {
+  spindle_status(0,0);
+}
+
+void spindle_status(int speed, int timee)
+{
   int ma    = md.getM1CurrentMilliamps();
+
+  Serial.print("Sp: "); 
+  Serial.print(speed); 
+  Serial.print("\t"); 
+
+  Serial.print("Tim: "); 
+  Serial.print(timee); 
+  Serial.print(" ms"); 
+  Serial.print("\t"); 
 
   Serial.print("Cur: "); 
   Serial.print(ma); 
@@ -122,7 +184,9 @@ void spindle_status()
   Serial.print("\t"); 
 
   Serial.print("Lev: "); 
-  Serial.println(level); 
+  Serial.print(level); 
+
+  Serial.println(); 
 }
 
 // lev 3000
@@ -188,10 +252,22 @@ void set_led(){
   ok();   
 }
 
+void spindle_save(){
+  saved_speed = speed;
+  ok();
+}
+
+void spindle_remember(){
+  spindle_forward();
+  saved_speed = 0;
+  ok();
+}
+
+
 // This gets set as the default handler, and gets called when no other command matches. 
 void unrecognized()
 {
-  Serial.println(F("? use commands: fwd[I], bwd[I], brk[I], sta, lev, tim[ms], led, dbg")); 
+  Serial.println(F("? use commands: fwd[S,T], bwd[S,T], jit[S,T] brk[I], sta, lev, tim[ms], led, dbg, sav, rem")); 
 }
 
 void setup()
@@ -206,13 +282,16 @@ void setup()
 
   // Setup callbacks for SerialCommand commands 
   SCmd.addCommand("fwd",spindle_forward);       // Turns spindle on and rotate forward
-  SCmd.addCommand("bwd",spindle_backward);      // Turns spindle on and rotate forward
+  SCmd.addCommand("bwd",spindle_backward);      // Turns spindle on and rotate backward
+  SCmd.addCommand("jit",spindle_jitter);        // Turns spindle rotate forward and backward
   SCmd.addCommand("brk",spindle_break);         // Turns Spindle w/ break power or defaultBreak
   SCmd.addCommand("sta",spindle_status);        // get milliamps and direction ...
   SCmd.addCommand("lev",spindle_set_breaklevel);// Set the level off millAmpere , the spindle will break
   SCmd.addCommand("tim",spindle_set_stoptime);  // Set delay to stop
   SCmd.addCommand("led",set_led);  // Set delay to stop
   SCmd.addCommand("dbg",set_dbg);  // Set debug output
+  SCmd.addCommand("sav",spindle_save);          // Save last direction and speed
+  SCmd.addCommand("rem",spindle_remember);      // set  --- "" --------
 
   // Interval to read current and stop spindle if rise over level
   currentEvent = timer.every(interval, checkCurrent);
@@ -229,5 +308,6 @@ void loop()
   
   timer.update();
 }
+
 
 
