@@ -68,15 +68,16 @@ var myXTCMacro = {
          // please test with ./blocktest.js to find perfect parameters
          block:   125,   // arc in degress to block the spindle shaft 
          unblock: 60,    // arc in degress to deblock the spindle shaft 
-         target:  478,   /* target value readed at pin A0 on ESP to 
-                            get the actual correct block position
-                            it's just an option */
+         touch:   100,   // arc in degress to touch the spindle shaft for touch probe
          level:   2500,  // level in mA to break spindle at ~2.5 Ampere
       }, // position values are in degress
       torqueDegrees: 45, /* IMPORTANT: maximum arc degrees to torque collet 
                             This value set the maximum torque on  ER-collet-nut, too high 
                             values can result in loose steps of motors or destroy your machine
                          */
+   },
+   tls:{
+      center:{ x:-100, y:15, z:-10 },      // position of the center from tool length sensor    
    },
    atcMillHolder: [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
@@ -335,6 +336,7 @@ var myXTCMacro = {
          // get new tool from holder, if neccessary
          this.displayTools(this.toolnumber);
          this.atc_move_to_holder(this.toolnumber, 'screw'); // move to holder and screw
+         this.tool_length_sensor();                         // move to TLS and check high
       }
    },
 
@@ -582,7 +584,7 @@ var myXTCMacro = {
    },
 
    servo: function(pos, callback){
-      $.get( 'http://' +this.addressServo +'/servo', { position: pos, target: this.carousel.servo.target } )
+      $.get( 'http://' +this.addressServo +'/servo', { position: pos } )
          .done(function( data ) {
               console.log('ATC Servo called to block.', data);
               if($.type(callback) == 'function')
@@ -669,6 +671,21 @@ var myXTCMacro = {
 
       // set tool in use
       this.toolinuse = this.toolnumber;
+   },
+
+   tool_length_sensor: function() {
+      var tls = this.tls;
+      this.servo(this.carousel.servo.connect);  // touch the spindle shaft for probing
+      var g = "(TLS movement)\n";
+      g += "G0 X" + tls.center.x 
+                  + " Y" + tls.center.y 
+                  + " Z" + tls.center.z 
+                  + "\n";                       // move to center of TLS
+      g += "G38.2 Z-10 F20\n";                  // touchprobe
+      g += "G92 Z0\n";                          // set Z-axis to Zero
+      g += "G0 Z" + this.atcParameters.safetyHeight + "\n";
+
+      this.send(g);
    },
 
    unpauseGcode: function(art) {
