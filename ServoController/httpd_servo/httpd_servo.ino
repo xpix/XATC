@@ -19,6 +19,20 @@ bool failed   = false;
 
 
 
+/* --------------------------------------- */
+
+int position_zero = 60;
+int position  = position_zero;
+int target    = 0;
+int pin       = 5; // Servo pin
+int wait      = 750;
+int readpin   = A0;
+int repeats   = 3;
+int realtarget= 0;
+bool failed   = false;
+
+
+
 ESP8266WebServer server(80);
 
 Servo myservo;

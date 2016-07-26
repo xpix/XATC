@@ -23,7 +23,9 @@ DC Controller
 // https://github.com/scogswell/ArduinoSerialCommand
 
 #include "SerialCommand.h"
-#include "DualVNH5019MotorShield.h"
+#include "HighPowerMotorDriver.h"
+
+//#include "DualVNH5019MotorShield.h"
 //#include "DCMController.h"
 #include "Timer.h"
 
@@ -39,8 +41,7 @@ int speed;
 int saved_speed;
 
 SerialCommand SCmd;        // The SerialCommand object
-DualVNH5019MotorShield md;
-//DCMController md;          // The motor driver
+HighPowerMotorDriver md;
 Timer timer;               // The timer object
 
 // fwd 400 500
@@ -67,7 +68,7 @@ void spindle_forward()
 
   spindle_status(speed, timee);
 
-  md.setM1Speed(speed);
+  md.setSpeed(speed);
   ok();
 }
 
@@ -94,7 +95,7 @@ void spindle_backward()
 
   spindle_status(speed, timee);
 
-  md.setM1Speed(speed);
+  md.setSpeed(speed);
   ok();
 }
 
@@ -138,7 +139,7 @@ void spindle_break()
 
   spindle_status(0, -1);
   
-  md.setM1Brake(breake);
+  md.setBrake();
   ok();
 }
 
@@ -167,7 +168,7 @@ void spindle_status()
 
 void spindle_status(int speed, int timee)
 {
-  int ma    = md.getM1CurrentMilliamps();
+  int ma    = md.getCurrentMilliamps();
 
   Serial.print("Sp: "); 
   Serial.print(speed); 
@@ -227,16 +228,16 @@ void ok(){
 }
 
 void checkCurrent(){
-   if( level > 0 && md.getM1CurrentMilliamps() >= level){
+   if( level > 0 && md.getCurrentMilliamps() >= level){
       timer.stop(currentEvent);
-      md.setM1Brake(400); // full brake
+      md.setBrake(); // full brake
       level = 0;          // reset level
       currentEvent = timer.every(interval, checkCurrent);
    }
 
-   if( level < 0 && md.getM1CurrentMilliamps() <= (0 - level)){
+   if( level < 0 && md.getCurrentMilliamps() <= (0 - level)){
       timer.stop(currentEvent);
-      md.setM1Brake(400); // full brake
+      md.setBrake(); // full brake
       level = 0;          // reset level
       currentEvent = timer.every(interval, checkCurrent);
    }
