@@ -60,6 +60,11 @@ var myXTCMacro = {
             speed: 200,       // after unscrew the collet,  params to rotate the spindle shaft with X speed ... 
             time:   50,       // ... for X time (in milliseconds) to loose the collet complete
          },
+         jitter:{
+            z:       -2,      // Position to start jitter
+            speed:  200,      // Power to jitter (means rotate X ms in every direction)
+            time:    50,      // time to jitter on every direction
+         },
    },
    carousel:{
       enabled: true,
@@ -370,6 +375,10 @@ var myXTCMacro = {
       if($.type(holder) !== 'object')
          return;
 
+      // Position of spindle to press the catchframe
+      var jitterZ = this.atcParameters.jitter.z;
+
+
       // -------------------- EVENT Planning -----------------------------------
 
       // Prepare event StartSpindleSlow ----------------------------------------
@@ -385,6 +394,19 @@ var myXTCMacro = {
       this.events.push({ x:holder.posX,  y:holder.posY,  z:startSpindleSlowZPos,
          event: startSpindleSlow,
          comment: 'Start spindle slow for pre-position.',
+      });
+
+      // Prepare event jitterSpindle -------------------------------------------
+      var jitterSpindle= $.Deferred();
+      var jitterSpindleZPos = jitterZ;
+
+      $.when( jitterSpindle )
+         .done( this.jitterSpindle.bind(this) );
+
+      // register the event for updateAxesFromStatus, 
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:jitterSpindleZPos,
+         event: jitterSpindle,
+         comment: 'Jitter spindle to catch collet nut.',
       });
 
 
@@ -458,6 +480,10 @@ var myXTCMacro = {
 
       // move to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
+
+      // add jitter 
+      cmd += "G1 Z" + jitterZ + "\n";
+      cmd += "G4 P1\n"; // wait some second's for jitter event
 
       // move slowly to the minus end collet Z position  ...
       cmd += "G1 Z" + nutZ + " F" + atcparams.feedRate + "\n";
@@ -656,6 +682,13 @@ var myXTCMacro = {
       console.log('ATC brk spindle');
    },
 
+   jitterSpindle: function(){
+      this.send(
+         "jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
+         this.serialPortXTC
+      );
+      console.log('ATC jitter spindle');
+   },
 
    // Event to move to savetyHeight in Z Axis
    atc_sec_height: function(){
