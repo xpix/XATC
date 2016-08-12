@@ -77,9 +77,20 @@ var myXTCMacro = {
                          */
    },
    tls:{
+      enabled: false,
       center:{ x:-100, y:15, z:-10 },      // position of the center from tool length sensor    
    },
    atcMillHolder: [
+      // Data for XATC 0.2 without(!) Gator Grips 
+      // Center Position holder, catch height, tighten val, tighten ms,    deg
+      // ---------------|-------------|-------------|-------------|---------|------
+      {posX :   53.50,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 360},  // 1. endmill holder
+      {posX :       0,  posY : -53.50, posZ: 5,   tourque: 400, time: 500, deg: 270},  // 2, endmill holder
+      {posX :  -53.50,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 180},  // 3. endmill holder
+      {posX :       0,  posY :  53.50, posZ: 5,   tourque: 400, time: 500, deg: 90},   // 4. endmill holder
+
+
+      /* Data for XATC 0.1 with Gator Grips
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
       {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 360},  // first endmill holder
@@ -91,6 +102,7 @@ var myXTCMacro = {
       {posX :       0,  posY :  45.00, posZ: 5,   tourque: 400, time: 500, deg: 90},   // 7. endmill holder
       {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 400, time: 500, deg: 45},   // 8. endmill holder
       // etc.pp
+      */
    ],
    toolnumber: 0,
    toolinuse: 0,
@@ -675,6 +687,8 @@ var myXTCMacro = {
 
    tool_length_sensor: function() {
       var tls = this.tls;
+      if(tls.enabled == false)
+         return;
       this.servo(this.carousel.servo.connect);  // touch the spindle shaft for probing
       var g = "(TLS movement)\n";
       g += "G0 X" + tls.center.x 
