@@ -524,7 +524,9 @@ var myXTCMacro = {
          event: startSpindleSlow,
          comment: 'Start spindle slow for blocking.',
       });
-      
+
+      // ------------------------------
+
       var blockSpindlePos = 0.3;
       cmd += "G1 F10 Z" + blockSpindlePos + "\n";
       cmd += "F500\n"; // set Feedrate for screw process
@@ -539,6 +541,7 @@ var myXTCMacro = {
             setTimeout(function(){
                // maybe we call 200ms later a slow spindle spin 
                // in the opposite direction, for perfect fit of wrench?
+               // TODO: replace with jitter function -----
                that.startSpindle(that.atcParameters.slow, 500, (screw ? 'fwd' : 'bwd')); 
                // then back the original direction to press the spindle in wrench for magic move :)
                setTimeout(function(){
@@ -550,10 +553,28 @@ var myXTCMacro = {
          event: startBlocker,
          comment: 'Move servo to block spindle shaft.',
       });
-      
-      var torqueSpindleZPos = (nutZ+0.2);
+
+      // ------------------------------
+
+      // Move to -2.1 and call jitter to catch the frame AFTER block spindle
+      var jitterSpindlePos = this.atcParameters.jitter.z+0.1;
+      cmd += "G1 F100 Z" + jitterSpindlePos + "\n";
+      cmd += "G4 P1\n"; // wait a second
+
+      var startJitter = $.Deferred();
+      $.when( startSpindleSlow, startBlocker, startJitter )
+         .done( function(){
+            this.jitterSpindle();
+         });
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:jitterSpindlePos,
+         event: startJitter,
+         comment: 'Jitter after block spindle to catch frame.',
+      });
+
+      // ------------------------------
       
       // move to nutZ+x cuz no tighten in this moment
+      var torqueSpindleZPos = (nutZ+0.2);
       cmd += "G1 Z" + torqueSpindleZPos + "\n"; 
       
       // move an torqueDegrees(°) arc CW
@@ -575,6 +596,8 @@ var myXTCMacro = {
          event: deBlocker,
          comment: 'Move servo to deblock spindle shaft.',
       });
+
+      // ------------------------------
 
       // move an ~90° arc CCW, back to original position
       theta1   = holder.deg + this.carousel.torqueDegrees;
