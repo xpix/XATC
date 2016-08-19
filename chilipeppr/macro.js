@@ -61,7 +61,7 @@ var myXTCMacro = {
             time:   50,       // ... for X time (in milliseconds) to loose the collet complete
          },
          jitter:{
-            z:       -3,      // Position to start jitter
+            z:       -4,      // Position to start jitter
             speed:  100,      // Power to jitter (means rotate X ms in every direction)
             time:    50,      // time to jitter on every direction
          },
@@ -557,7 +557,7 @@ var myXTCMacro = {
       // ------------------------------
 
       // Move to -2.1 and call jitter to catch the frame AFTER block spindle
-      var jitterSpindlePos = this.atcParameters.jitter.z-0.8;
+      var jitterSpindlePos = this.atcParameters.jitter.z;
       cmd += "G1 Z" + jitterSpindlePos + "\n";
       cmd += "G4 P1\n"; // wait a second
 
