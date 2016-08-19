@@ -61,8 +61,8 @@ var myXTCMacro = {
             time:   50,       // ... for X time (in milliseconds) to loose the collet complete
          },
          jitter:{
-            z:       -2,      // Position to start jitter
-            speed:  200,      // Power to jitter (means rotate X ms in every direction)
+            z:       -3,      // Position to start jitter
+            speed:  100,      // Power to jitter (means rotate X ms in every direction)
             time:    50,      // time to jitter on every direction
          },
    },
@@ -387,7 +387,7 @@ var myXTCMacro = {
 
       // add a rule if startSpindleSlow event happend
       $.when( startSpindleSlow )
-         .done( this.startSpindle.bind(this, atcparams.slow) );
+         .done( this.startSpindle.bind(this, atcparams.slow, 1000) );
 
       // register the event for updateAxesFromStatus, 
       // the cool thing this event will only one time fired :)
@@ -707,7 +707,8 @@ var myXTCMacro = {
 
    jitterSpindle: function(){
       this.send(
-         "jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
+         //"jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
+         "fwd " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
          this.serialPortXTC
       );
       console.log('ATC jitter spindle');
