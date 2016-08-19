@@ -557,7 +557,7 @@ var myXTCMacro = {
       // ------------------------------
 
       // Move to -2.1 and call jitter to catch the frame AFTER block spindle
-      var jitterSpindlePos = this.atcParameters.jitter.z+0.1;
+      var jitterSpindlePos = this.atcParameters.jitter.z-0.8;
       cmd += "G1 Z" + jitterSpindlePos + "\n";
       cmd += "G4 P1\n"; // wait a second
 
@@ -707,8 +707,7 @@ var myXTCMacro = {
 
    jitterSpindle: function(){
       this.send(
-         //"jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
-         "fwd " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
+         "jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
          this.serialPortXTC
       );
       console.log('ATC jitter spindle');
