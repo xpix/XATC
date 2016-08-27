@@ -557,7 +557,7 @@ var myXTCMacro = {
       // ------------------------------
 
       // Move to -2.1 and call jitter to catch the frame AFTER block spindle
-      var jitterSpindlePos = this.atcParameters.jitter.z;
+      var jitterSpindlePos = this.atcParameters.jitter.z-0.25;
       cmd += "G1 Z" + jitterSpindlePos + "\n";
       cmd += "G4 P1\n"; // wait a second
 
@@ -565,6 +565,7 @@ var myXTCMacro = {
       $.when( startSpindleSlow, startBlocker, startJitter )
          .done( function(){
             that.jitterSpindle();
+            that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:jitterSpindlePos,
          event: startJitter,
