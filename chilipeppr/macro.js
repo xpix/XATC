@@ -40,7 +40,7 @@ To test this with tinyg2 or tinyg follow this steps:
    * use url http://chilipeppr.com/tinyg?v9=true
    * set linenumbers on
    * in tinyg widget set "No init CMD's Mode"
-   * choose "tinygg2" in SPJS Widget
+   * choose "tinyg" in SPJS Widget
 
 */
 if (!Array.prototype.last)
@@ -361,10 +361,7 @@ var myXTCMacro = {
 
       console.log('ATC called: ', 'atc_move_to_holder', toolnumber, art);
 
-      // first stop spindle
-      //this.stopSpindle();
-
-      // then prepare spindle
+      // then prepare spindle for slow rotate
       this.startSpindle(100);
 
 
@@ -374,9 +371,6 @@ var myXTCMacro = {
 
       if($.type(holder) !== 'object')
          return;
-
-      // Position of spindle to press the catchframe
-      var jitterZ = this.atcParameters.jitter.z;
 
       // G-CODE Start --------
       // now move spindle to the holder position
@@ -409,7 +403,7 @@ var myXTCMacro = {
 
       // Prepare event jitterSpindle -------------------------------------------
       var jitterSpindle= $.Deferred();
-      var jitterSpindleZPos = jitterZ;
+      var jitterSpindleZPos = this.atcParameters.jitter.z;
 
       $.when( jitterSpindle )
          .done( this.jitterSpindle.bind(this) );
@@ -423,11 +417,11 @@ var myXTCMacro = {
       // move to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
       // add jitter 
-      cmd += "G1 Z" + jitterZ + "\n";
+      cmd += "G1 Z" + jitterSpindleZPos + "\n";
       cmd += "G4 P1\n"; // wait some second's for jitter event
 
 
-      // Add screw or unscrew process with 
+      // Add screw or unscrew process with -------------------------------------
       // catchframe and magic move
       if(art == 'screw'){
          cmd += this.screw(holder, atcparams);
@@ -435,7 +429,7 @@ var myXTCMacro = {
          cmd += this.unscrew(holder, atcparams);
       }
 
-      // Prepare event unpause ---------------------------------------------
+      // Prepare event unpause -------------------------------------------------
       var unpause = $.Deferred();
       var unpausedZPos = atcparams.safetyHeight+0.1;
       
