@@ -62,8 +62,8 @@ var myXTCMacro = {
          },
          jitter:{
             z:       -4,      // Position to start jitter
-            speed:  100,      // Power to jitter (means rotate X ms in every direction)
-            time:    50,      // time to jitter on every direction
+            speed:  200,      // Power to jitter (means rotate X ms in every direction)
+            time:   200,      // time to jitter on every direction
          },
    },
    carousel:{
@@ -378,6 +378,11 @@ var myXTCMacro = {
       // Position of spindle to press the catchframe
       var jitterZ = this.atcParameters.jitter.z;
 
+      // G-CODE Start --------
+      // now move spindle to the holder position
+      // first to safetyHeight ...
+      // change to G59 coordinaten system & XY plave for ARC's
+      var cmd = "G59 G17\n";
 
       // -------------------- EVENT Planning -----------------------------------
 
@@ -396,6 +401,12 @@ var myXTCMacro = {
          comment: 'Start spindle slow for pre-position.',
       });
 
+      // move to XY holder center ...
+      cmd += "G0 Z" + startSpindleSlowZPos + "\n";
+      cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
+      cmd += "G4 P0.5\n"; // wait for start spindle slow
+
+
       // Prepare event jitterSpindle -------------------------------------------
       var jitterSpindle= $.Deferred();
       var jitterSpindleZPos = jitterZ;
@@ -409,39 +420,19 @@ var myXTCMacro = {
          comment: 'Jitter spindle to catch collet nut.',
       });
 
+      // move to holder Z pre-position height ...
+      cmd += "G0 Z" + holder.posZ + "\n";
+      // add jitter 
+      cmd += "G1 Z" + jitterZ + "\n";
+      cmd += "G4 P1\n"; // wait some second's for jitter event
 
-      // Prepare event looseCollet ---------------------------------------------
-      var looseCollet = $.Deferred();
-      var looseColletZPos = atcparams.nutZ+1;
 
-      if(art == 'unscrew'){
-         // add a rule if looseCollet event happend after startSpindleSlow
-         $.when( looseCollet )
-            .done( this.atc_unscrew.bind(this) );
-   
-         // register the event for updateAxesFromStatus, 
-         // the cool thing this event will only one time fired :)
-         this.events.push({ x:holder.posX,  y:holder.posY,  z:looseColletZPos,
-            event: looseCollet,
-            comment: 'Rotate spindle backwards with full power for 0.5 seconds.',
-         });
-      }
-
-      // Prepare event tightCollet ---------------------------------------------
-      var tightCollet = $.Deferred();
-      var tightColletZPos = atcparams.nutZ;
-      
+      // Add screw or unscrew process with 
+      // catchframe and magic move
       if(art == 'screw'){
-         // add a rule if tightCollet event happend
-         $.when( tightCollet )
-            .done( this.atc_screw.bind(this) );
-   
-         // register the event for updateAxesFromStatus, 
-         // the cool thing this event will only one time fired :)
-         this.events.push({ x:holder.posX,  y:holder.posY,  z:tightColletZPos,
-            event: tightCollet,
-            comment: 'Rotate spindle forward with full power for 0.5 seconds.',
-         });
+         cmd += this.screw(holder, atcparams);
+      } else {
+         cmd += this.unscrew(holder, atcparams);
       }
 
       // Prepare event unpause ---------------------------------------------
@@ -460,46 +451,76 @@ var myXTCMacro = {
          comment: 'Unpause the process and do the job.',
       });
 
-      // -------------------- EVENT Planning -- END ----------------------------
-
-      console.log('ATC events', this.events);
-
-      var nutZ = (art === 'unscrew' ? looseColletZPos : tightColletZPos);
-
-      // now move spindle to the holder position
-      // first to safetyHeight ...
-      // change to G59 coordinaten system & XY plave for ARC's
-      var cmd = "G59 G17\n";
-
-      // move Z to safety height
-      cmd += "G0 Z" + atcparams.safetyHeight + "\n";
-
-      // move to XY holder center ...
-      cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
-      cmd += "G4 P0.5\n"; // wait for start spindle slow
-
-      // move to holder Z pre-position height ...
-      cmd += "G0 Z" + holder.posZ + "\n";
-
-      // add jitter 
-      cmd += "G1 Z" + jitterZ + "\n";
-      cmd += "G4 P1\n"; // wait some second's for jitter event
-
-      // move slowly to the minus end collet Z position  ...
-      cmd += "G1 Z" + nutZ + " F" + atcparams.feedRate + "\n";
-      cmd += "G4 P2\n"; // wait some second's for screw/unscrew event
-
-      // Add gcode and events for the XATC carousel
-      cmd += this.torqueMove(nutZ, holder, atcparams, art);
-
       // move to event unpause
       cmd += "G0 Z" + unpausedZPos + "\n";   
       cmd += "G4 P1\n"; // wait some second's for unpaused event
+
+
+      // -------------------- EVENT Planning -- END ----------------------------
 
       // change to original machine Coordinaten system
       cmd += "G54\n";   
       
       this.send(cmd);
+   },
+
+   // ---------------------------------------------
+   screw: function(holder, atcparams){
+      var cmd = '';
+      var art = 'screw';
+
+      // Prepare event tightCollet ---------------------------------------------
+      var tightCollet = $.Deferred();
+      var tightColletZPos = atcparams.nutZ;
+      
+      // add a rule if tightCollet event happend
+      $.when( tightCollet )
+         .done( this.atc_screw.bind(this) );
+
+      // register the event for updateAxesFromStatus, 
+      // the cool thing this event will only one time fired :)
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:tightColletZPos,
+         event: tightCollet,
+         comment: 'Rotate spindle forward with full power for 0.5 seconds.',
+      });
+
+      cmd += "G1 Z" + tightColletZPos + " F" + atcparams.feedRate + "\n";
+      cmd += "G4 P2\n"; // wait some second's for screw/unscrew event
+
+      // Magic move 
+      cmd += this.torqueMove(tightColletZPos, holder, atcparams, art);
+
+      return cmd;
+   },
+
+   // ---------------------------------------------
+   unscrew: function(holder, atcparams){
+      var cmd = '';
+      var art = 'unscrew';
+
+      // Magic move (block spindle and arc move)
+      cmd += this.torqueMove(looseColletZPos, holder, atcparams, art);
+
+      // Prepare event looseCollet ---------------------------------------------
+      var looseCollet = $.Deferred();
+      var looseColletZPos = atcparams.nutZ-0.3; // -4.3
+
+      // add a rule if looseCollet event happend after startSpindleSlow
+      $.when( looseCollet )
+         .done( this.atc_unscrew.bind(this) );
+
+      // register the event for updateAxesFromStatus, 
+      // the cool thing this event will only one time fired :)
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:looseColletZPos,
+         event: looseCollet,
+         comment: 'Rotate spindle backwards with full power for 0.5 seconds.',
+      });
+
+
+      cmd += "G1 Z" + looseColletZPos + " F" + atcparams.feedRate + "\n";
+      cmd += "G4 P2\n"; // wait some second's for screw/unscrew event
+
+      return cmd;
    },
 
    torqueMove: function(nutZ, holder, atcparams, art){
@@ -539,14 +560,8 @@ var myXTCMacro = {
          .done( function(){
             that.servo( that.carousel.servo.block );
             setTimeout(function(){
-               // maybe we call 200ms later a slow spindle spin 
-               // in the opposite direction, for perfect fit of wrench?
-               // TODO: replace with jitter function -----
-               that.startSpindle(that.atcParameters.slow, 500, (screw ? 'fwd' : 'bwd')); 
-               // then back the original direction to press the spindle in wrench for magic move :)
-               setTimeout(function(){
-                  that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
-               }, 300);
+               that.jitterSpindle();
+               that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
             }, 200);
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
@@ -606,22 +621,6 @@ var myXTCMacro = {
           theta1   = holder.deg - this.carousel.torqueDegrees;
       theta2   = holder.deg;
       cmd += this.arc((screw ? 'G2' : 'G3'), theta1, theta2, holder);
-
-      // unscrew with a short powerfull backward rotate 
-      // to let the endmill in holder
-      if(! screw){
-            var powerbwdPos = (nutZ-0.3);
-            cmd += "G1 Z" + powerbwdPos + "\n"; 
-            cmd += "G4 P2\n";
-
-            var PowerBWD = $.Deferred();
-            $.when( PowerBWD )
-               .done( this.startSpindle.bind(this, this.atcParameters.loose.speed +" "+ this.atcParameters.loose.time, 0, 'bwd') );
-            this.events.push({ x:holder.posX,  y:holder.posY,  z:powerbwdPos,
-               event: PowerBWD,
-               comment: 'Powerfull backward to let endmill in spindle.',
-            });
-      }
 
       return cmd;
    },
