@@ -63,7 +63,7 @@ var myXTCMacro = {
          jitter:{
             z:       -4,      // Position to start jitter
             speed:  200,      // Power to jitter (means rotate X ms in every direction)
-            time:   200,      // time to jitter on every direction
+            time:   50,      // time to jitter on every direction
          },
    },
    carousel:{
@@ -492,13 +492,13 @@ var myXTCMacro = {
       var cmd = '';
       var art = 'unscrew';
 
+      var looseColletZPos = atcparams.nutZ-0.3; // -4.3
+
       // Magic move (block spindle and arc move)
       cmd += this.torqueMove(looseColletZPos, holder, atcparams, art);
 
       // Prepare event looseCollet ---------------------------------------------
       var looseCollet = $.Deferred();
-      var looseColletZPos = atcparams.nutZ-0.3; // -4.3
-
       // add a rule if looseCollet event happend after startSpindleSlow
       $.when( looseCollet )
          .done( this.atc_unscrew.bind(this) );
@@ -543,7 +543,7 @@ var myXTCMacro = {
       // ------------------------------
 
       var blockSpindlePos = 0.3;
-      cmd += "G1 F10 Z" + blockSpindlePos + "\n";
+      cmd += "G1 F100 Z" + blockSpindlePos + "\n";
       cmd += "F500\n"; // set Feedrate for screw process
       cmd += "G4 P2\n"; // wait some second's for start rotate spindle
 
@@ -700,8 +700,10 @@ var myXTCMacro = {
    },
 
    jitterSpindle: function(){
+      this.send("lev 0", this.serialPortXTC);
       this.send(
-         "jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
+         //"jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
+         "jit " + this.atcParameters.jitter.speed + ' '  + 15, 
          this.serialPortXTC
       );
       console.log('ATC jitter spindle');
