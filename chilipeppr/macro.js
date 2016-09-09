@@ -63,7 +63,7 @@ var myXTCMacro = {
          jitter:{
             z:       -4,      // Position to start jitter
             speed:  200,      // Power to jitter (means rotate X ms in every direction)
-            time:   50,      // time to jitter on every direction
+            time:   15,      // time to jitter on every direction
          },
    },
    carousel:{
@@ -555,7 +555,9 @@ var myXTCMacro = {
             that.servo( that.carousel.servo.block );
             setTimeout(function(){
                that.jitterSpindle();
-               that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
+               setTimeout(function(){
+                  that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
+               }, that.atcParameters.jitter.time*3);
             }, 200);
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
@@ -702,8 +704,7 @@ var myXTCMacro = {
    jitterSpindle: function(){
       this.send("lev 0", this.serialPortXTC);
       this.send(
-         //"jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
-         "jit " + this.atcParameters.jitter.speed + ' '  + 15, 
+         "jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
          this.serialPortXTC
       );
       console.log('ATC jitter spindle');
