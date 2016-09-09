@@ -572,7 +572,7 @@ var myXTCMacro = {
       var startJitter = $.Deferred();
       $.when( startSpindleSlow, startBlocker, startJitter )
          .done( function(){
-            that.jitterSpindle('bwd');
+            that.jitterSpindle((art == 'screw' ? 'bwd' : 'fwd'));
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:jitterSpindlePos,
          event: startJitter,
