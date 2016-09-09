@@ -196,7 +196,7 @@ var myXTCMacro = {
       // if has the event xyz the same (rounded to X.1) values as the actual position
       // then fire up the planned event
       this.events.forEach(function(entry){
-         console.log("ATC updateAxesFromStatus. data:", that.axis);
+         //console.log("ATC updateAxesFromStatus. data:", that.axis);
          if(entry.event.state() != 'resolved' 
             && that.rd(entry.x) == that.axis.x 
             && that.rd(entry.y) == that.axis.y 
@@ -555,9 +555,6 @@ var myXTCMacro = {
             that.servo( that.carousel.servo.block );
             setTimeout(function(){
                that.jitterSpindle();
-               setTimeout(function(){
-                  that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
-               }, that.atcParameters.jitter.time*3);
             }, 200);
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:blockSpindlePos,
@@ -575,8 +572,7 @@ var myXTCMacro = {
       var startJitter = $.Deferred();
       $.when( startSpindleSlow, startBlocker, startJitter )
          .done( function(){
-            that.jitterSpindle();
-            that.startSpindle(that.atcParameters.slow, 0, (screw ? 'bwd' : 'fwd')); 
+            that.jitterSpindle('bwd');
          });
       this.events.push({ x:holder.posX,  y:holder.posY,  z:jitterSpindlePos,
          event: startJitter,
@@ -701,12 +697,15 @@ var myXTCMacro = {
       console.log('ATC brk spindle');
    },
 
-   jitterSpindle: function(){
+   jitterSpindle: function(direction){
       this.send("lev 0", this.serialPortXTC);
       this.send(
          "jit " + this.atcParameters.jitter.speed + ' '  + this.atcParameters.jitter.time, 
          this.serialPortXTC
       );
+      if(direction){
+         this.startSpindle(this.atcParameters.slow, 0, direction); 
+      }
       console.log('ATC jitter spindle');
    },
 
