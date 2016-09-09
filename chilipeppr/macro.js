@@ -704,7 +704,10 @@ var myXTCMacro = {
          this.serialPortXTC
       );
       if(direction){
-         this.startSpindle(this.atcParameters.slow, 0, direction); 
+         var that = this;
+         setTimeout(function(){
+            that.startSpindle(that.atcParameters.slow, 0, direction); 
+         }, 100);
       }
       console.log('ATC jitter spindle');
    },
