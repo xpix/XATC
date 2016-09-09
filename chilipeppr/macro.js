@@ -724,6 +724,9 @@ var myXTCMacro = {
       // ok action == moved, now we can loose nut and move the machine 
       console.log('ATC called: ', 'atc_unscrew');
 
+      // untighten process
+      this.send("bwd "+ this.atcParameters.loose.speed+" "+ this.atcParameters.loose.time, this.serialPortXTC);
+
       // unset tool in use
       this.toolinuse = 0;
    },
