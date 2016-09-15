@@ -332,8 +332,6 @@ var myXTCMacro = {
 
       this.servo(this.carousel.servo.unblock);
 
-      this.spindleStatus(); // remember on last spindle rpm
-
       this.toolnumber = data.toolnumber;
       this.events = [];
 
@@ -360,6 +358,7 @@ var myXTCMacro = {
    atc_move_to_holder: function( toolnumber, art ){
 
       console.log('ATC called: ', 'atc_move_to_holder', toolnumber, art);
+      this.spindleStatus(); // remember on last spindle rpm
 
       // then prepare spindle for slow rotate
       this.startSpindle(100);
@@ -544,8 +543,8 @@ var myXTCMacro = {
 
       var blockSpindlePos = 0.3;
       cmd += "G1 F100 Z" + blockSpindlePos + "\n";
-      cmd += "F500\n"; // set Feedrate for screw process
-      cmd += "G4 P2\n"; // wait some second's for start rotate spindle
+      cmd += "F750\n"; // set Feedrate for screw process
+      cmd += "G4 P1\n"; // wait some second's for block spindle
 
       // block spindle via servo 
       // we "shake" spindle for a short time to have a perfect "catched" wrench
@@ -588,8 +587,9 @@ var myXTCMacro = {
       // move an torqueDegrees(°) arc CW
       var theta1   = holder.deg;
       var theta2   = holder.deg + this.carousel.torqueDegrees;
-      if(! screw)
-          theta2   = holder.deg - this.carousel.torqueDegrees;
+      if(! screw){
+          theta2   = holder.deg - (this.carousel.torqueDegrees + 20);
+      }
       cmd += this.arc((screw ? 'G3' : 'G2'), theta1, theta2, holder);
       cmd += "G4 P2\n";
       
@@ -636,18 +636,16 @@ var myXTCMacro = {
       return mode + " X" + xe + " Y" + ye + " R" + carousel.r + "\n";
    },
 
+   /* 
+   Send servo control commands and call a 
+   callback after success move
+   */
    servo: function(pos, callback){
-      $.get( 'http://' +this.addressServo +'/servo', { position: pos } )
-         .done(function( data ) {
-              console.log('ATC Servo called to block.', data);
-              if($.type(callback) == 'function')
-                  callback();
-         })
-         .fail(function( data ) {
-              console.log('ATC Servo FAILED to block.', data);
-         });
+      this.send('srv ' + pos, this.serialPortXTC);
 
-
+      console.log('ATC Servo called to (un)block.');
+      if($.type(callback) == 'function')
+         callback();
    },
 
    
