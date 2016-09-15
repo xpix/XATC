@@ -588,7 +588,7 @@ var myXTCMacro = {
       var theta1   = holder.deg;
       var theta2   = holder.deg + this.carousel.torqueDegrees;
       if(! screw){
-          theta2   = holder.deg - (this.carousel.torqueDegrees + 20);
+          theta2   = holder.deg - (this.carousel.torqueDegrees + (this.carousel.torqueDegrees/2));
       }
       cmd += this.arc((screw ? 'G3' : 'G2'), theta1, theta2, holder);
       cmd += "G4 P2\n";
