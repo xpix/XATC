@@ -1,22 +1,22 @@
 /*
 The XTC Console program to communicate between chilipeppr and motordriver. 
 Use a normal arduino nano at this time and send textcommands (a kind of g-code for spindle)
-Please use this DC Controller (30A High Power Single way H-bridge DC Motor Driver Module) http://www.ebay.com/itm/131528092776 
-and a ACS712 Current sensor
+
+Please use this DC Controller:
+https://www.pololu.com/product/1451
 
 Use this pinout:
-ACS712: 
-  VCC --> 5V
-  SIG --> A0
-  3.3 --> A5
-  GND --> GND
-
 DC Controller
   GND --> GND
   PA  --> D9
   A1  --> D2
   A2  --> D4
-  
+
+For Servo control to block the spindle please use a servo with this pinout
+Servo:
+  GND --> GND
+  VCC --> VUSB
+  SIG --> D6
 */
 
 // Demo Code for SerialCommand Library Steven Cogswell May 2011
@@ -26,7 +26,9 @@ DC Controller
 #include "DualVNH5019MotorShield.h"
 //#include "DCMController.h"
 #include "Timer.h"
+#include <Servo.h>
 
+#define servoPin 6            // Arduino Servo Pin
 #define arduinoLED 13         // Arduino LED on board
 #define defaultSpeed 100      // Default speed for spindle
 #define defaultBreak 400      // Default power for breake 
@@ -38,10 +40,28 @@ int debugEvent;
 int speed;
 int saved_speed;
 
-SerialCommand SCmd;        // The SerialCommand object
-DualVNH5019MotorShield md;
-//DCMController md;          // The motor driver
-Timer timer;               // The timer object
+SerialCommand SCmd;           // The SerialCommand object
+DualVNH5019MotorShield md;    // The motor driver
+//DCMController md;           // The motor driver
+Servo myservo;                // create servo object to control a servo
+Timer timer;                  // The timer object
+
+
+void servo_control()
+{
+  int pos = 91;
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg != NULL)      // As long as it existed, take it
+  {
+      pos = atol(arg);
+  }
+
+  myservo.write(pos); 
+  delay(100);   
+
+  ok();
+}
+
 
 // fwd 400 500
 void spindle_forward()
@@ -277,6 +297,9 @@ void setup()
 
   Serial.begin(115200); 
 
+  // Initialize Servo
+  myservo.attach(servoPin);
+
   // Initialize motordriver
   md.init();
 
@@ -292,6 +315,7 @@ void setup()
   SCmd.addCommand("dbg",set_dbg);  // Set debug output
   SCmd.addCommand("sav",spindle_save);          // Save last direction and speed
   SCmd.addCommand("rem",spindle_remember);      // set  --- "" --------
+  SCmd.addCommand("srv",servo_control);         // Send commands to servo
 
   // Interval to read current and stop spindle if rise over level
   currentEvent = timer.every(interval, checkCurrent);
