@@ -50,9 +50,8 @@ if (!Array.prototype.last)
 
 var myXTCMacro = {
    serialPortXTC:    "/dev/ttyUSB2",   // Spindle DC Controler
-   addressServo:     "127.0.0.1",      // Networkaddress of Servoc ESP8266 Controller
    atcParameters: {
-         slow:          60,   // value for minimum rpm
+         slow:          30,   // value for minimum rpm
          safetyHeight:  27,   // safety height
          feedRate:      300,  // Feedrate to move to scew position
          nutZ:          -5,   // safety deep position of collet in nut

@@ -39,16 +39,15 @@ else {
 
 function setXTCParams(macro){
   // here you can set your Parameters
-   macro.serialPortXTC =   "/dev/ttyUSB1";   // XTC Controler
-   macro.addressServo =    "192.168.1.219";      // Networkaddress of Servoc ESP8266 Controller
-   macro.atcParameters.safetyHeight = 40;
-   macro.atcParameters.nutZ = -7;
+   macro.serialPortXTC =   "/dev/ttyUSB0";   // XTC Controler
+   macro.atcParameters.safetyHeight = 42;
+   macro.atcParameters.nutZ = -6.5;
 
    macro.carousel = {
       enabled: true,
       center:{ x:-206.8, y:73.7, z: -5, r: 53.5},  // center of carousel and radius of the diameter center circle
-      servo: { block:125, unblock:84}, // position values are in degress
-      torqueDegrees: 40,              // maximum arc degrees to torque collet
+      servo: { block:123, unblock:84}, // position values are in degress
+      torqueDegrees: 50,              // maximum arc degrees to torque collet
    };
    macro.atcMillHolder = [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
