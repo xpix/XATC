@@ -796,7 +796,7 @@ var myXTCMacro = {
          .done( function(){
             that.servo( that.carousel.servo.unblock );
          });
-      this.events.push({ x:0,  y:0,  z:blockSpindlePos,
+      this.events.push({ x:5,  y:-5,  z:blockSpindlePos,
          event: startDeBlocker,
          comment: 'Move servo to deblock spindle shaft.',
       });
