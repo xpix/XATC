@@ -52,7 +52,7 @@ var myXTCMacro = {
    serialPortXTC:    "/dev/ttyUSB2",   // Spindle DC Controler
    atcParameters: {
          slow:          30,   // value for minimum rpm
-         safetyHeight:  27,   // safety height
+         safetyHeight:  40,   // safety height
          feedRate:      300,  // Feedrate to move to scew position
          nutZ:          -5,   // safety deep position of collet in nut
          loose:{               
@@ -83,6 +83,13 @@ var myXTCMacro = {
    tls:{
       enabled: false,
       center:{ x:-100, y:15, z:-10 },      // position of the center from tool length sensor    
+   },
+   touchprobe:{
+      enabled: true,
+      servo: 130,       // Angel to connect Spindle shaft for sure!
+      feedrate: 150,    // Feedrate for touch probe
+      thick: 0.035,     // thick of probe (copper tape or other)
+      secure_height: 2, // move to this z-height after probing
    },
    atcMillHolder: [
       // Data for XATC 0.2 without(!) Gator Grips 
@@ -351,6 +358,7 @@ var myXTCMacro = {
          this.displayTools(this.toolnumber);
          this.atc_move_to_holder(this.toolnumber, 'screw'); // move to holder and screw
          this.tool_length_sensor();                         // move to TLS and check high
+         this.touch_probe_sensor();                         // move to zero of surface and make a touch probe
       }
    },
 
@@ -756,6 +764,44 @@ var myXTCMacro = {
 
       this.send(g);
    },
+
+   touch_probe_sensor: function() {
+      var touchp = this.touchprobe;
+      if(touchp.enabled == false)
+         return;
+      this.servo(this.touchprobe.servo);  // touch the spindle shaft for probing
+      var g = "(Touch probe movement)\n";
+      g += "G54 G17 G21\n";            // init movement
+      /*
+         use calculate offset coordinates for touch point
+         analyze bbox and use the lower left/right/bottom/top corner
+      */
+      g += "G0 X5 Y-5\n";              // move to corner of workpiece
+      g += "G38.2 Z-50 F" + this.touchprobe.feedrate + "\n";       // touchprobe
+      g += "G28.3 Z" + this.touchprobe.thick + "\n";               // zero original wcs (remove it, if possible)
+      g += "G10 L2 P1 Z0\n";                                       // set G54/Z-axis to Zero
+
+      var blockSpindlePos = this.touchprobe.secure_height+this.touchprobe.thick; // i.e. 
+      g += "G0 Z" + this.touchprobe.secure_height + "\n";
+      g += "G4 P1\n";                                              // pause for event
+      this.send(g);
+
+      // Events ----------------------------
+      
+      // block spindle via servo 
+      // we "shake" spindle for a short time to have a perfect "catched" wrench
+      var that = this;
+      var startDeBlocker = $.Deferred();
+      $.when( startDeBlocker )
+         .done( function(){
+            that.servo( that.carousel.servo.unblock );
+         });
+      this.events.push({ x:0,  y:0,  z:blockSpindlePos,
+         event: startDeBlocker,
+         comment: 'Move servo to deblock spindle shaft.',
+      });
+   },
+
 
    unpauseGcode: function(art) {
       this.servo(this.carousel.servo.unblock);

@@ -40,6 +40,7 @@ else {
 function setXTCParams(macro){
   // here you can set your Parameters
    macro.serialPortXTC =   "/dev/ttyUSB0";   // XTC Controler
+   macro.atcParameters.slow = 30;   // value for minimum rpm
    macro.atcParameters.safetyHeight = 42;
    macro.atcParameters.nutZ = -6.5;
 
