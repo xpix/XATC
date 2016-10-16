@@ -137,7 +137,7 @@ var myXTCMacro = {
       // Check for Automatic Toolchange Command
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.subscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
-      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete ", this, this.onChiliPepprPauseOnComplete );
+      chilipeppr.subscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnExecute", this, this.onChiliPepprPauseOnComplete );
       chilipeppr.subscribe("/com-chilipeppr-widget-eagle/beforeToolPathRender", this, this.onBeforeRender);
 
       chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "XDisPlace Macro", "Send commands to second xdisplace cnccontroller for ATC");
@@ -160,7 +160,7 @@ var myXTCMacro = {
       macro.status("Uninitting chilipeppr_pause macro.");
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/axes", this, this.updateAxesFromStatus);
       chilipeppr.unsubscribe("/com-chilipeppr-interface-cnccontroller/status", this, this.onStateChanged);
-      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete ", this, this.onChiliPepprPauseOnComplete );
+      chilipeppr.unsubscribe("/com-chilipeppr-widget-gcode/onChiliPepprPauseOnComplete", this, this.onChiliPepprPauseOnComplete );
       chilipeppr.unsubscribe("/com-chilipeppr-widget-eagle/beforeToolPathRender", this, this.onBeforeRender);
 
       this.sceneRemove();
@@ -195,6 +195,11 @@ var myXTCMacro = {
       if ('z' in axis && axis.z !== null) {
           this.axis.z = this.rd( axis.z );
       }
+      // machine ccordinate for Z-Axis for touch probe
+      if ('z' in axis.mpo && axis.mpo.z !== null) {
+          this.axis.mz =axis.mpo.z;
+      }
+console.log('atc updateAxesFromStatus', this.axis);
 
       var that = this;
 
@@ -207,6 +212,16 @@ var myXTCMacro = {
             && that.rd(entry.x) == that.axis.x 
             && that.rd(entry.y) == that.axis.y 
             && that.rd(entry.z) == that.axis.z
+            )
+            {
+               entry.event.resolve();                                // Fire up the event
+               console.log('ATC fire Event: ', entry);
+            }
+
+         if(entry.event.state() != 'resolved' 
+            && entry.art        =='twoaxis'
+            && that.rd(entry.x) == that.axis.x 
+            && that.rd(entry.y) == that.axis.y 
             )
             {
                entry.event.resolve();                                // Fire up the event
@@ -778,12 +793,9 @@ var myXTCMacro = {
       */
       g += "G0 X5 Y-5\n";              // move to corner of workpiece
       g += "G38.2 Z-50 F" + this.touchprobe.feedrate + "\n";       // touchprobe
-      g += "G28.3 Z" + this.touchprobe.thick + "\n";               // zero original wcs (remove it, if possible)
-      g += "G10 L2 P1 Z0\n";                                       // set G54/Z-axis to Zero
-
-      var blockSpindlePos = this.touchprobe.secure_height+this.touchprobe.thick; // i.e. 
-      g += "G0 Z" + this.touchprobe.secure_height + "\n";
-      g += "G4 P1\n";                                              // pause for event
+      g += "G91 G0 Z2\n" + "G90\n";
+      g += "G0 X0 Y0\n";      // move to corner of workpiece
+      g += "G4 P1\n";     // pause for event
       this.send(g);
 
       // Events ----------------------------
@@ -794,9 +806,10 @@ var myXTCMacro = {
       var startDeBlocker = $.Deferred();
       $.when( startDeBlocker )
          .done( function(){
+            that.send("G10 L2 P1 Z" + (that.axis.mz - (that.touchprobe.secure_height + that.touchprobe.thick)) + "\n");        // set G54/Z-axis to Zero
             that.servo( that.carousel.servo.unblock );
          });
-      this.events.push({ x:5,  y:-5,  z:blockSpindlePos,
+      this.events.push({ x:0,  y:0, art:'twoaxis',
          event: startDeBlocker,
          comment: 'Move servo to deblock spindle shaft.',
       });
