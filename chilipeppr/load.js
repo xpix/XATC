@@ -35,14 +35,17 @@ if(! mxtc){
 }
 else {
   setXTCParams(mxtc);
+  mxtc.toolinuse = 0;
+  console.log('INIT MACRO', mxtc);
 }
 
 function setXTCParams(macro){
   // here you can set your Parameters
-   macro.serialPortXTC =   "/dev/ttyUSB0";   // XTC Controler
-   macro.atcParameters.slow = 30;   // value for minimum rpm
+   macro.serialPortXTC =   "/dev/ttyUSB1";   // XTC Controler
    macro.atcParameters.safetyHeight = 42;
-   macro.atcParameters.nutZ = -6.5;
+   macro.atcParameters.jitter.z = -5;
+   macro.atcParameters.nutZ = -7;
+   macro.atcParameters.slow = 30;   // value for minimum rpm
 
    macro.carousel = {
       enabled: true,
@@ -53,10 +56,10 @@ function setXTCParams(macro){
    macro.atcMillHolder = [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
-      {posX :   53.50,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 360},  // 1. endmill holder
-      {posX :       0,  posY : -53.50, posZ: 5,   tourque: 400, time: 500, deg: 270},  // 2, endmill holder
-      {posX :  -53.50,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 180},  // 3. endmill holder
-      {posX :       0,  posY :  53.50, posZ: 5,   tourque: 400, time: 500, deg: 90},   // 4. endmill holder
+      {posX :   53.50,  posY :  0,     posZ: 5,   tourque: 200, time: 100, deg: 360},  // 1. endmill holder
+      {posX :       0,  posY : -53.50, posZ: 5,   tourque: 200, time: 100, deg: 270},  // 2, endmill holder
+      {posX :  -53.50,  posY :  0,     posZ: 5,   tourque: 200, time: 100, deg: 180},  // 3. endmill holder
+      {posX :       0,  posY :  53.50, posZ: 5,   tourque: 200, time: 100, deg: 90},   // 4. endmill holder
    ];
 
    macro.tls = {
