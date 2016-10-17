@@ -85,6 +85,7 @@ var myXTCMacro = {
       center:{ x:-100, y:15, z:-10 },      // position of the center from tool length sensor    
    },
    touchprobe:{
+      position: {x:5, y:-5},
       enabled: true,
       servo: 130,       // Angel to connect Spindle shaft for sure!
       feedrate: 150,    // Feedrate for touch probe
@@ -372,8 +373,6 @@ console.log('atc updateAxesFromStatus', this.axis);
          // get new tool from holder, if neccessary
          this.displayTools(this.toolnumber);
          this.atc_move_to_holder(this.toolnumber, 'screw'); // move to holder and screw
-         this.tool_length_sensor();                         // move to TLS and check high
-         this.touch_probe_sensor();                         // move to zero of surface and make a touch probe
       }
    },
 
@@ -791,11 +790,11 @@ console.log('atc updateAxesFromStatus', this.axis);
          use calculate offset coordinates for touch point
          analyze bbox and use the lower left/right/bottom/top corner
       */
-      g += "G0 X5 Y-5\n";              // move to corner of workpiece
+      g += "G0 X"+ this.touchprobe.position.x +" Y" + this.touchprobe.position.y +"\n";     // move to corner of workpiece minus offset
       g += "G38.2 Z-50 F" + this.touchprobe.feedrate + "\n";       // touchprobe
       g += "G91 G0 Z2\n" + "G90\n";
       g += "G0 X0 Y0\n";      // move to corner of workpiece
-      g += "G4 P1\n";     // pause for event
+      g += "G4 P1\n";         // pause for event
       this.send(g);
 
       // Events ----------------------------
@@ -825,8 +824,12 @@ console.log('atc updateAxesFromStatus', this.axis);
          this.onATC({toolnumber: this.toolnumber});
          return;
       }
-      chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
 
+      // Touch probe or tool length sensor methods
+      this.tool_length_sensor();                         // move to TLS and check high
+      this.touch_probe_sensor();                         // move to zero of surface and make a touch probe
+
+      chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
       this.spindleStatus('rem'); // set last saved spindle speed
    },
 };
