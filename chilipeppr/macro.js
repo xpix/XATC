@@ -347,6 +347,9 @@ console.log('atc updateAxesFromStatus', this.axis);
    onATC: function(data){
       console.log('ATC Execute Line:', data);
 
+      // save spindle speed in controller
+      this.spindleStatus(); // remember on last spindle rpm
+
       // now the machine is in pause mode
       // cuz M6 linenumber are the same as actual linenumber
       // and we can do whatever we like :)
@@ -379,7 +382,6 @@ console.log('atc updateAxesFromStatus', this.axis);
    atc_move_to_holder: function( toolnumber, art ){
 
       console.log('ATC called: ', 'atc_move_to_holder', toolnumber, art);
-      this.spindleStatus(); // remember on last spindle rpm
 
       // then prepare spindle for slow rotate
       this.startSpindle(100);
