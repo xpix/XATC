@@ -119,6 +119,7 @@ var myXTCMacro = {
    toolnumber: 0,
    toolinuse: 0,
    axis: {x:0, y:0, z:0},
+   probed: false,
    events: [],
    init: function() {
       // Uninit previous runs to unsubscribe correctly, i.e.
@@ -793,6 +794,9 @@ console.log('atc updateAxesFromStatus', this.axis);
          analyze bbox and use the lower left/right/bottom/top corner
       */
       g += "G0 X"+ this.touchprobe.position.x +" Y" + this.touchprobe.position.y +"\n";     // move to corner of workpiece minus offset
+      if(this.probed){
+            g += "G0 Z5\n";       // move fast to second touchprobe
+      }
       g += "G38.2 Z-50 F" + this.touchprobe.feedrate + "\n";       // touchprobe
       g += "G91 G0 Z2\n" + "G90\n";
       g += "G0 X0 Y0\n";      // move to corner of workpiece
@@ -809,6 +813,9 @@ console.log('atc updateAxesFromStatus', this.axis);
          .done( function(){
             that.send("G10 L2 P1 Z" + (that.axis.mz - (that.touchprobe.secure_height + that.touchprobe.thick)) + "\n");        // set G54/Z-axis to Zero
             that.servo( that.carousel.servo.unblock );
+            that.probed = true;
+            that.spindleStatus('rem'); // set last saved spindle speed
+            chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
          });
       this.events.push({ x:0,  y:0, art:'twoaxis',
          event: startDeBlocker,
@@ -828,11 +835,11 @@ console.log('atc updateAxesFromStatus', this.axis);
       }
 
       // Touch probe or tool length sensor methods
-      this.tool_length_sensor();                         // move to TLS and check high
-      this.touch_probe_sensor();                         // move to zero of surface and make a touch probe
+      // this.tool_length_sensor();                         // move to TLS and check high
 
-      chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
-      this.spindleStatus('rem'); // set last saved spindle speed
+      // to unpause and remember 
+      // on spindle status look at:
+      this.touch_probe_sensor();                         // move to zero of surface and make a touch probe
    },
 };
 // call init from cp 
