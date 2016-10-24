@@ -28,7 +28,10 @@ DC Controller
 //#include "DualVNH5019MotorShield.h"
 //#include "DCMController.h"
 #include "Timer.h"
+#include <Servo.h>
 
+
+#define servoPin A0           // Arduino Servo Pin
 #define arduinoLED 13         // Arduino LED on board
 #define defaultSpeed 100      // Default speed for spindle
 #define defaultBreak 400      // Default power for breake 
@@ -43,6 +46,23 @@ int saved_speed;
 SerialCommand SCmd;        // The SerialCommand object
 HighPowerMotorDriver md;
 Timer timer;               // The timer object
+Servo myservo;                // create servo object to control a servo
+
+void servo_control()
+{
+  int pos = 91;
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg != NULL)      // As long as it existed, take it
+  {
+      pos = atol(arg);
+  }
+
+  myservo.write(pos); 
+  delay(100);   
+
+  ok();
+}
+
 
 // fwd 400 500
 void spindle_forward()
@@ -278,10 +298,14 @@ void setup()
 
   Serial.begin(115200); 
 
+  // Initialize Servo
+  myservo.attach(servoPin);
+
   // Initialize motordriver
   md.init();
 
   // Setup callbacks for SerialCommand commands 
+  SCmd.addCommand("srv",servo_control);         // Send commands to servo
   SCmd.addCommand("fwd",spindle_forward);       // Turns spindle on and rotate forward
   SCmd.addCommand("bwd",spindle_backward);      // Turns spindle on and rotate backward
   SCmd.addCommand("jit",spindle_jitter);        // Turns spindle rotate forward and backward
