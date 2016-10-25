@@ -16,6 +16,10 @@ DC Controller
   PA  --> D9
   A1  --> D2
   A2  --> D4
+
+PWM Signal from CNC Controller
+  PWM --> D3
+  GND --> GND
   
 */
 
@@ -24,15 +28,14 @@ DC Controller
 
 #include "SerialCommand.h"
 #include "HighPowerMotorDriver.h"
-
-//#include "DualVNH5019MotorShield.h"
-//#include "DCMController.h"
 #include "Timer.h"
 #include <Servo.h>
 
 
 #define servoPin A0           // Arduino Servo Pin
 #define arduinoLED 13         // Arduino LED on board
+#define pwmPin 3              // PWM read pin
+
 #define defaultSpeed 100      // Default speed for spindle
 #define defaultBreak 400      // Default power for breake 
 #define interval 50           // interval in milliseconds to test the motor current
@@ -42,6 +45,9 @@ int currentEvent;
 int debugEvent;
 int speed;
 int saved_speed;
+int pwm_value;
+int speedTimer;
+
 
 SerialCommand SCmd;        // The SerialCommand object
 HighPowerMotorDriver md;
@@ -57,6 +63,7 @@ void servo_control()
       pos = atol(arg);
   }
 
+  spindle_pwm(false);
   myservo.write(pos); 
   delay(100);   
 
@@ -68,6 +75,7 @@ void servo_control()
 void spindle_forward()
 {
   speed = defaultSpeed;
+  spindle_pwm(false);
 
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
   if (arg != NULL)      // As long as it existed, take it
@@ -96,6 +104,8 @@ void spindle_forward()
 void spindle_backward()
 {
   speed = (0 - defaultSpeed);
+  spindle_pwm(false);
+
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
   if (arg != NULL)      // As long as it existed, take it
   {
@@ -123,6 +133,8 @@ void spindle_jitter()
 {
   int time = 0;
   int speed = 0;
+  spindle_pwm(false);
+
   // Speed parameter 
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
   if (arg != NULL)      // As long as it existed, take it
@@ -151,6 +163,8 @@ void spindle_jitter()
 void spindle_break()
 {
   int breake = defaultBreak;
+  spindle_pwm(false);
+
   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
   if (arg != NULL)      // As long as it existed, take it
   {
@@ -192,6 +206,10 @@ void spindle_status(int speed, int timee)
 
   Serial.print("Sp: "); 
   Serial.print(speed); 
+  Serial.print("\t"); 
+
+  Serial.print("PWM: "); 
+  Serial.print(pwm_value); 
   Serial.print("\t"); 
 
   Serial.print("Tim: "); 
@@ -273,15 +291,33 @@ void set_led(){
   ok();   
 }
 
-void spindle_save(){
-  saved_speed = speed;
-  ok();
+void spindle_pwm(){
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg == NULL)            // As long as it existed, take it
+  {
+     spindle_pwm(true);
+  }
+  else
+  {
+     spindle_pwm(false);
+  }
 }
 
-void spindle_remember(){
-  spindle_forward();
-  saved_speed = 0;
-  ok();
+void spindle_pwm(bool active){
+   if(active){
+      // set a timer he read the pwm signal and set the spindle speed
+      if(pwm_value > 0){
+        md.setSpeed(pwm_value);
+      } else {
+        md.setSpeed(0);
+      }
+      speedTimer = timer.after(250, spindle_pwm);
+   }else{
+      if(speedTimer){
+         timer.stop(speedTimer);
+         md.setSpeed(0);
+      }
+   }
 }
 
 
@@ -295,6 +331,8 @@ void setup()
 {  
   pinMode(arduinoLED,OUTPUT);      // Configure the onboard LED for output
   digitalWrite(arduinoLED,LOW);    // default to LED off
+
+  pinMode(pwmPin, INPUT);          // Pin to read PWM Value from CNC Controller
 
   Serial.begin(115200); 
 
@@ -313,23 +351,62 @@ void setup()
   SCmd.addCommand("sta",spindle_status);        // get milliamps and direction ...
   SCmd.addCommand("lev",spindle_set_breaklevel);// Set the level off millAmpere , the spindle will break
   SCmd.addCommand("tim",spindle_set_stoptime);  // Set delay to stop
-  SCmd.addCommand("led",set_led);  // Set delay to stop
-  SCmd.addCommand("dbg",set_dbg);  // Set debug output
-  SCmd.addCommand("sav",spindle_save);          // Save last direction and speed
-  SCmd.addCommand("rem",spindle_remember);      // set  --- "" --------
+  SCmd.addCommand("led",set_led);               // Set led on/off
+  SCmd.addCommand("dbg",set_dbg);               // Set debug output
+  SCmd.addCommand("pwm",spindle_pwm);           // set  --- "" --------
 
   // Interval to read current and stop spindle if rise over level
   currentEvent = timer.every(interval, checkCurrent);
 
 
   SCmd.addDefaultHandler(unrecognized);  // Handler for command that isn't matched  (says "What?") 
-  Serial.println(F("XTC-Console 0.1 ready")); 
+  Serial.println(F("XTC-Console 0.2 ready")); 
 
 }
+
+
+// Define the number of samples to keep track of.  The higher the number,
+// the more the readings will be smoothed, but the slower the output will
+// respond to the input.  Using a constant rather than a normal variable lets
+// use this value to determine the size of the readings array.
+const int numReadings = 10;
+
+int readings[numReadings];      // the readings from the analog input
+int readIndex = 0;              // the index of the current reading
+int total = 0;                  // the running total
 
 void loop()
 {  
   SCmd.readSerial();     // We don't do much, just process serial commands
+
+  // read sindle speed PWM pin and translate from 0 ... 400 
+  /*
+   * 0rpm or off    =     <1100
+   * 1000rpm        =     1245
+   * 12000rpm       =     2000
+   */
+  int pwm = pulseIn(pwmPin, HIGH);
+
+  // subtract the last reading:
+  total = total - readings[readIndex];
+  // read from the sensor:
+  readings[readIndex] = pwm;
+  // add the reading to the total:
+  total = total + readings[readIndex];
+  // advance to the next position in the array:
+  readIndex = readIndex + 1;
+
+  // if we're at the end of the array...
+  if (readIndex >= numReadings) {
+    pwm_value = map(total / numReadings, 1100, 2000, 0, 40)*10;
+    //pwm_value = total / numReadings;
+
+    // ...wrap around to the beginning:
+    readIndex = 0;
+  }
+
+  // calculate the average:
+  delay(1);
   
   timer.update();
 }
