@@ -1,22 +1,22 @@
 /*
 The XTC Console program to communicate between chilipeppr and motordriver. 
 Use a normal arduino nano at this time and send textcommands (a kind of g-code for spindle)
-Please use this DC Controller (30A High Power Single way H-bridge DC Motor Driver Module) http://www.ebay.com/itm/131528092776 
-and a ACS712 Current sensor
+
+Please use this DC Controller:
+https://www.pololu.com/product/1451
 
 Use this pinout:
-ACS712: 
-  VCC --> 5V
-  SIG --> A0
-  3.3 --> A5
-  GND --> GND
-
 DC Controller
   GND --> GND
   PA  --> D9
   A1  --> D2
   A2  --> D4
-  
+
+For Servo control to block the spindle please use a servo with this pinout
+Servo:
+  GND --> GND
+  VCC --> VUSB
+  SIG --> D12
 */
 
 // Demo Code for SerialCommand Library Steven Cogswell May 2011
@@ -24,51 +24,76 @@ DC Controller
 
 #include "SerialCommand.h"
 #include "DualVNH5019MotorShield.h"
-//#include "DCMController.h"
 #include "Timer.h"
+#include "SoftwareServo.h"
 
+#define servoPin 12           // Arduino Servo Pin
 #define arduinoLED 13         // Arduino LED on board
 #define defaultSpeed 100      // Default speed for spindle
 #define defaultBreak 400      // Default power for breake 
 #define interval 50           // interval in milliseconds to test the motor current
+#define pwmPin A1             // read tinyg rpm/pwm value
 
 int level   = 0;
 int currentEvent;
 int debugEvent;
 int speed;
 int saved_speed;
+int pwm_value;
+int speedTimer;
 
-SerialCommand SCmd;        // The SerialCommand object
-DualVNH5019MotorShield md;
-//DCMController md;          // The motor driver
-Timer timer;               // The timer object
+
+SerialCommand SCmd;           // The SerialCommand object
+DualVNH5019MotorShield md;    // The motor driver
+SoftwareServo myservo;                // create servo object to control a servo
+Timer timer;                  // The timer object
+
+void servo_control()
+{
+   int pos = 91;
+   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+   if (arg != NULL)      	  // As long as it existed, take it
+   {
+      pos = atol(arg);
+   }
+   Serial.println(pos); 
+
+   spindle_pwm(false); 		  // stop spindle pwm read 
+
+   myservo.write(pos); 
+   delay(100);   
+
+   ok();
+}
 
 // fwd 400 500
 void spindle_forward()
 {
-  speed = defaultSpeed;
+   speed = defaultSpeed;
 
-  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
-  if (arg != NULL)      // As long as it existed, take it
-  {
+   char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+   if (arg != NULL)      // As long as it existed, take it
+   {
       speed = atol(arg);
-  }
-  else if(saved_speed) {
+   }
+   else if(saved_speed) {
       speed = saved_speed;
-  }
+   }
 
-  // Timer parameter 
-  arg = SCmd.next();
-  int timee = 0;
-  if (arg != NULL){
-    timee = atol(arg);
-    callTimer(timee);
-  }
+   spindle_pwm(false); 		  // stop spindle pwm read 
 
-  spindle_status(speed, timee);
+   // Timer parameter 
+   arg = SCmd.next();
+   int timee = 0;
+   if (arg != NULL){
+      timee = atol(arg);
+      callTimer(timee);
+   }
 
-  md.setM1Speed(speed);
-  ok();
+   spindle_status(speed, timee);
+
+   md.setM1Speed(speed);
+   ok();
 }
 
 // bwd 400 500
@@ -83,6 +108,8 @@ void spindle_backward()
   else if(saved_speed) {
       speed = saved_speed;
   }
+
+  spindle_pwm(false); 		  // stop spindle pwm read 
 
   // Timer parameter 
   arg = SCmd.next();
@@ -115,6 +142,8 @@ void spindle_jitter()
     time = atol(arg);
   }
 
+  spindle_pwm(false); 		  // stop spindle pwm read 
+
   // jitter one times forward i.e. speed 200 - time 100ms
   saved_speed = speed;
   spindle_forward();                      // drive spindle forward
@@ -135,6 +164,8 @@ void spindle_break()
   {
       breake = atol(arg);
   }
+
+  spindle_pwm(false); 		  // stop spindle pwm read 
 
   spindle_status(0, -1);
   
@@ -171,6 +202,10 @@ void spindle_status(int speed, int timee)
 
   Serial.print("Sp: "); 
   Serial.print(speed); 
+  Serial.print("\t"); 
+
+  Serial.print("PWM: "); 
+  Serial.print(pwm_value); 
   Serial.print("\t"); 
 
   Serial.print("Tim: "); 
@@ -243,6 +278,7 @@ void checkCurrent(){
 }
 
 void set_led(){
+	
   if(digitalRead(arduinoLED)){
       digitalWrite(arduinoLED,LOW);
   }
@@ -252,23 +288,50 @@ void set_led(){
   ok();   
 }
 
-void spindle_save(){
-  saved_speed = speed;
-  ok();
+// Helper method to let the user toggle pwm switch
+void spindle_pwm(){
+  char *arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+  if (arg == NULL)            // As long as it existed, take it
+  {
+     spindle_pwm(true);
+  }
+  else
+  {
+     spindle_pwm(false);
+  }
 }
 
-void spindle_remember(){
-  spindle_forward();
-  saved_speed = 0;
-  ok();
+void spindle_pwm(bool active){
+   if(active){
+      if(pwm_value > 0){
+        md.setM1Speed(pwm_value);
+      } else {
+        md.setM1Brake(defaultBreak);
+      }
+      // set a timer he read the pwm signal and set the spindle speed
+      speedTimer = timer.after(250, spindle_pwm);
+   }else{
+      if(speedTimer){
+         timer.stop(speedTimer);
+         md.setM1Speed(0);
+      }
+   }
 }
 
 
 // This gets set as the default handler, and gets called when no other command matches. 
 void unrecognized()
 {
-  Serial.println(F("? use commands: fwd[S,T], bwd[S,T], jit[S,T] brk[I], sta, lev, tim[ms], led, dbg, sav, rem")); 
+  Serial.println(F("? use commands: fwd[S,T], bwd[S,T], jit[S,T] brk[I], sta, lev, tim[ms], srv[deg], dbg[ms], pwm")); 
 }
+
+void readRPM()
+{
+   pwm_value = pulseIn(pwmPin, HIGH);
+   pwm_value = map(pwm_value, 1100, 2000, 0, 40)*10;
+}
+
+
 
 void setup()
 {  
@@ -277,10 +340,15 @@ void setup()
 
   Serial.begin(115200); 
 
+  // Initialize Servo
+  myservo.attach(servoPin);
+  myservo.setMaximumPulse(2200);
+
   // Initialize motordriver
   md.init();
 
   // Setup callbacks for SerialCommand commands 
+  SCmd.addCommand("srv",servo_control);         // Send commands to servo
   SCmd.addCommand("fwd",spindle_forward);       // Turns spindle on and rotate forward
   SCmd.addCommand("bwd",spindle_backward);      // Turns spindle on and rotate backward
   SCmd.addCommand("jit",spindle_jitter);        // Turns spindle rotate forward and backward
@@ -288,25 +356,26 @@ void setup()
   SCmd.addCommand("sta",spindle_status);        // get milliamps and direction ...
   SCmd.addCommand("lev",spindle_set_breaklevel);// Set the level off millAmpere , the spindle will break
   SCmd.addCommand("tim",spindle_set_stoptime);  // Set delay to stop
-  SCmd.addCommand("led",set_led);  // Set delay to stop
   SCmd.addCommand("dbg",set_dbg);  // Set debug output
-  SCmd.addCommand("sav",spindle_save);          // Save last direction and speed
-  SCmd.addCommand("rem",spindle_remember);      // set  --- "" --------
+  SCmd.addCommand("pwm",spindle_pwm);           // read rpm from analog input
+
 
   // Interval to read current and stop spindle if rise over level
   currentEvent = timer.every(interval, checkCurrent);
 
 
   SCmd.addDefaultHandler(unrecognized);  // Handler for command that isn't matched  (says "What?") 
-  Serial.println(F("XTC-Console 0.1 ready")); 
+  Serial.println(F("XTC-Console 0.2 ready")); 
 
 }
 
 void loop()
 {  
   SCmd.readSerial();     // We don't do much, just process serial commands
-  
+  SoftwareServo::refresh();  
   timer.update();
+
+  readRPM();
 }
 
 
