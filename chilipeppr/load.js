@@ -35,30 +35,37 @@ if(! mxtc){
 }
 else {
   setXTCParams(mxtc);
+  mxtc.toolinuse = 0;
+  console.log('INIT MACRO', mxtc);
 }
 
 function setXTCParams(macro){
   // here you can set your Parameters
    macro.serialPortXTC =   "/dev/ttyUSB1";   // XTC Controler
-   macro.addressServo =    "192.168.1.135";      // Networkaddress of Servoc ESP8266 Controller
-   macro.atcParameters.safetyHeight = 27;
+   macro.atcParameters.safetyHeight = 42;
+   macro.atcParameters.jitter.z = -5;
+   macro.atcParameters.nutZ = -7;
+   macro.atcParameters.slow = 30;   // value for minimum rpm
+
    macro.carousel = {
       enabled: true,
-      center:{ x:-206.8, y:73.7, z: -5, r:45 },  // center of carousel and radius of the diameter center circle
-      servo: { block:125, unblock:35}, // position values are in degress
-      torqueDegrees: 45,              // maximum arc degrees to torque collet
+      center:{ x:-206.8, y:73.7, z: -5, r: 53.5},  // center of carousel and radius of the diameter center circle
+      servo: { block:123, unblock:84}, // position values are in degress
+      torqueDegrees: 50,              // maximum arc degrees to torque collet
    };
    macro.atcMillHolder = [
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
-      {posX :   45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 360},     // first endmill holder
-      {posX :   31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 315},    // second endmill holder
-      {posX :       0,  posY : -45.00, posZ: 5,   tourque: 300, time: 500, deg: 270},    // third endmill holder
-      {posX :  -31.82,  posY : -31.82, posZ: 5,   tourque: 300, time: 500, deg: 225},   // forth endmill holder
-      {posX :  -45.00,  posY :  0,     posZ: 5,   tourque: 300, time: 500, deg: 180},   // 5. endmill holder
-      {posX :  -31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 135},   // 6. endmill holder
-      {posX :       0,  posY :  45.00, posZ: 5,   tourque: 300, time: 500, deg: 90},   // 7. endmill holder
-      {posX :   31.82,  posY :  31.82, posZ: 5,   tourque: 300, time: 500, deg: 45},   // 8. endmill holder
-      // etc.pp
+      {posX :   53.50,  posY :  0,     posZ: 5,   tourque: 200, time: 100, deg: 360},  // 1. endmill holder
+      {posX :       0,  posY : -53.50, posZ: 5,   tourque: 200, time: 100, deg: 270},  // 2, endmill holder
+      {posX :  -53.50,  posY :  0,     posZ: 5,   tourque: 200, time: 100, deg: 180},  // 3. endmill holder
+      {posX :       0,  posY :  53.50, posZ: 5,   tourque: 200, time: 100, deg: 90},   // 4. endmill holder
    ];
+
+   macro.tls = {
+      // Postion for TLS = Tool length sensor
+      enabled: false,                       // use tls?
+      center:{ x:-100, y:15, z:-10 },       // position of the center from tool length sensor    
+   };
+
 }

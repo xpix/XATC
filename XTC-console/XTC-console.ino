@@ -16,7 +16,7 @@ For Servo control to block the spindle please use a servo with this pinout
 Servo:
   GND --> GND
   VCC --> VUSB
-  SIG --> D12
+  SIG --> D6
 */
 
 // Demo Code for SerialCommand Library Steven Cogswell May 2011
@@ -41,7 +41,6 @@ int speed;
 int saved_speed;
 int pwm_value;
 int speedTimer;
-
 
 SerialCommand SCmd;           // The SerialCommand object
 DualVNH5019MotorShield md;    // The motor driver
@@ -358,7 +357,6 @@ void setup()
   SCmd.addCommand("tim",spindle_set_stoptime);  // Set delay to stop
   SCmd.addCommand("dbg",set_dbg);  // Set debug output
   SCmd.addCommand("pwm",spindle_pwm);           // read rpm from analog input
-
 
   // Interval to read current and stop spindle if rise over level
   currentEvent = timer.every(interval, checkCurrent);
