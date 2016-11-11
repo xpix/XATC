@@ -37,10 +37,11 @@ to pre-poition, tight or loose the ER11 Collet.
 
 To test this with tinyg2 or tinyg follow this steps:
    * use SPJS 1.89
-   * use url http://chilipeppr.com/tinyg?v9=true
    * set linenumbers on
-   * in tinyg widget set "No init CMD's Mode"
    * choose "tinyg" in SPJS Widget
+   * add follow as start commands to XTC-Console in cjhilipeppr
+      srv 80
+      pwm
 
 */
 if (!Array.prototype.last)
@@ -347,9 +348,6 @@ console.log('atc updateAxesFromStatus', this.axis);
 
    onATC: function(data){
       console.log('ATC Execute Line:', data);
-
-      // save spindle speed in controller
-      this.spindleStatus(); // remember on last spindle rpm
 
       // now the machine is in pause mode
       // cuz M6 linenumber are the same as actual linenumber
@@ -685,15 +683,6 @@ console.log('atc updateAxesFromStatus', this.axis);
       console.log('ATC SEND: ', command, port);
    },
 
-   spindleStatus: function(type){
-      // save the last spindle status
-      if(type === undefined)
-         this.send('sav', this.serialPortXTC);
-      // save the last spindle status
-      else if(type === 'rem')
-         this.send('rem', this.serialPortXTC);
-   },
-   
    startSpindle: function(speed, level, direction, time){
       if(direction === undefined)
             direction = 'fwd';
@@ -814,7 +803,7 @@ console.log('atc updateAxesFromStatus', this.axis);
             that.send("G10 L2 P1 Z" + (that.axis.mz - (that.touchprobe.secure_height + that.touchprobe.thick)) + "\n");        // set G54/Z-axis to Zero
             that.servo( that.carousel.servo.unblock );
             that.probed = true;
-            that.spindleStatus('rem'); // set last saved spindle speed
+            that.send("pwm", this.serialPortXTC); // read tinyg pwm spindle speed and set spindle
             chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
          });
       this.events.push({ x:0,  y:0, art:'twoaxis',
