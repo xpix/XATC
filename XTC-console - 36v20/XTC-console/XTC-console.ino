@@ -324,7 +324,7 @@ void spindle_pwm(bool active){
 // This gets set as the default handler, and gets called when no other command matches. 
 void unrecognized()
 {
-  Serial.println(F("? use commands: fwd[S,T], bwd[S,T], jit[S,T] brk[I], sta, lev, tim[ms], led, dbg, sav, rem")); 
+  Serial.println(F("? use commands: fwd[S,T], bwd[S,T], jit[S,T] brk[I], sta, lev, tim[ms], srv[deg], dbg, sav, rem")); 
 }
 
 void setup()
