@@ -147,10 +147,6 @@ var myXTCMacro = {
 
       // first thing we need to do is get 3d obj
       this.get3dObj(function() {
-          // when we get here, we've got the 3d obj 
-          console.log('ATC 3dobj loading');
-          this.drawHolders();
-          
           console.log('ATC get tool database');
           this.toolsDatabase();
           
@@ -289,12 +285,24 @@ console.log('atc updateAxesFromStatus', this.axis);
       this.toolsdatabase = []; 
    	for (var i = 0; i < 100; i++) {
    		var line = gcodelines[i];
-        console.log('ATC line', line);
+         console.log('ATC line', line);
+         // xpix style
+         // (T1: Drill 0.6)
          if(line !== undefined && line.args.text.match(/T(\d+)\:\s*(\S*)\s+(\S+)/)){
           this.toolsdatabase.push({
              number:    parseInt(RegExp.$1, 10),
              type:      RegExp.$2,
              size:      parseFloat(RegExp.$3)
+          });
+         }
+
+         // tinyg postprocessor style
+         //  (T1  D=3.175 CR=1.587 - ZMIN=-12. - KUGELSCHLICHTFRSER)
+         if(line !== undefined && line.args.text.match(/T(\d+)\s+D\=(\S*)\s+CR\=(\S+)\s*\-\s*ZMIN=\S+\s*\-\s*(\S+)/)){
+          this.toolsdatabase.push({
+             number:    parseInt(RegExp.$1, 10),
+             type:      RegExp.$4,
+             size:      parseFloat(RegExp.$2)
           });
          }
       }
@@ -321,30 +329,6 @@ console.log('atc updateAxesFromStatus', this.axis);
       if(table !== undefined)
          chilipeppr.publish("/com-chilipeppr-elem-flashmsg/flashmsg", "<b>XATC Tools Database</b>", table, 5000);
    },
-      
-   drawHolders: function(blength, bwidth) {
-
-      var material = new THREE.MeshBasicMaterial({
-         color: 0xAAAADD,
-         wireframe: true,
-         opacity: 0.5
-      });
-   
-      var that = this;
-      this.atcMillHolder.forEach(function(holder){
-         var geometry = new THREE.CylinderGeometry(8.5,8.5,50,6);
-         var mesh = new THREE.Mesh( geometry, material );
-         mesh.position.set( 
-             (that.carousel.center.x + holder.posX),
-             (that.carousel.center.y + holder.posY),
-             (-50 + holder.posZ)
-         );
-         mesh.rotateX(Math.PI / 2); // 90 degrees
-
-         that.sceneAdd( mesh );   
-      });
-   },
-
 
    onATC: function(data){
       console.log('ATC Execute Line:', data);
