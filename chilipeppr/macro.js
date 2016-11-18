@@ -195,10 +195,9 @@ var myXTCMacro = {
           this.axis.z = this.rd( axis.z );
       }
       // machine ccordinate for Z-Axis for touch probe
-      if ('z' in axis.mpo && axis.mpo.z !== null) {
+      if (axis.mpo !== undefined && 'z' in axis.mpo && axis.mpo.z !== null) {
           this.axis.mz =axis.mpo.z;
       }
-console.log('atc updateAxesFromStatus', this.axis);
 
       var that = this;
 
@@ -298,7 +297,7 @@ console.log('atc updateAxesFromStatus', this.axis);
 
          // tinyg postprocessor style
          //  (T1  D=3.175 CR=1.587 - ZMIN=-12. - KUGELSCHLICHTFRSER)
-         if(line !== undefined && line.args.text.match(/T(\d+)\s+D\=(\S*)\s+CR\=(\S+)\s*\-\s*ZMIN=\S+\s*\-\s*(\S+)/)){
+         if(line !== undefined && line.args.text.match(/T(\d+)\s+D\=(\S*)\s+CR\=(\S+)\s*\-\s*ZMIN=\S+\s*\-\s*(\S+)\)/)){
           this.toolsdatabase.push({
              number:    parseInt(RegExp.$1, 10),
              type:      RegExp.$4,
