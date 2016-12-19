@@ -54,7 +54,7 @@ var myXTCMacro = {
    atcParameters: {
          slow:          30,   // value for minimum rpm
          safetyHeight:  40,   // safety height
-         feedRate:      300,  // Feedrate to move to scew position
+         feedRate:      300,  // Feedrate to move to screw position
          nutZ:          -5,   // safety deep position of collet in nut
          loose:{               
             speed: 200,       // after unscrew the collet,  params to rotate the spindle shaft with X speed ... 
@@ -68,7 +68,7 @@ var myXTCMacro = {
    },
    carousel:{
       enabled: true,
-      center:{ x:-200, y:15, r:45 },  // center of carousel and radius of the diameter center circle
+      center:{ r:45 },  // radius of the diameter center holes circle
       servo: { 
          // please test with ./blocktest.js to find perfect parameters
          block:   125,   // arc in degress to block the spindle shaft 
@@ -82,10 +82,6 @@ var myXTCMacro = {
                             This value set the maximum torque on  ER-collet-nut, too high 
                             values can result in loose steps of motors or destroy your machine
                          */
-   },
-   tls:{
-      enabled: false,
-      center:{ x:-100, y:15, z:-10 },      // position of the center from tool length sensor    
    },
    touchprobe:{
       position: {x:5, y:-5},
@@ -752,23 +748,6 @@ var myXTCMacro = {
       this.toolinuse = this.toolnumber;
    },
 
-   tool_length_sensor: function() {
-      var tls = this.tls;
-      if(tls.enabled == false)
-         return;
-      this.servo(this.carousel.servo.connect);  // touch the spindle shaft for probing
-      var g = "(TLS movement)\n";
-      g += "G0 X" + tls.center.x 
-                  + " Y" + tls.center.y 
-                  + " Z" + tls.center.z 
-                  + "\n";                       // move to center of TLS
-      g += "G38.2 Z-10 F20\n";                  // touchprobe
-      g += "G92 Z0\n";                          // set Z-axis to Zero
-      g += "G0 Z" + this.atcParameters.safetyHeight + "\n";
-
-      this.send(g);
-   },
-
    touch_probe_sensor: function() {
       var touchp = this.touchprobe;
       if(touchp.enabled == false)
@@ -820,9 +799,6 @@ var myXTCMacro = {
          this.onATC({toolnumber: this.toolnumber});
          return;
       }
-
-      // Touch probe or tool length sensor methods
-      // this.tool_length_sensor();                         // move to TLS and check high
 
       // to unpause and remember 
       // on spindle status look at:
