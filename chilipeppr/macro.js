@@ -76,7 +76,9 @@ var myXTCMacro = {
          touch:   100,   // arc in degress to touch the spindle shaft for touch probe
          level:   2500,  // level in mA to break spindle at ~2.5 Ampere
       }, // position values are in degress
-      torqueDegrees: 45, /* IMPORTANT: maximum arc degrees to torque collet 
+      catchDegrees:  15, // in screw mode: degrees for opposite direction to catch the collet
+                         // 0 means no opposite move
+      torqueDegrees: 50, /* IMPORTANT: maximum arc degrees to torque collet 
                             This value set the maximum torque on  ER-collet-nut, too high 
                             values can result in loose steps of motors or destroy your machine
                          */
@@ -584,10 +586,23 @@ var myXTCMacro = {
       });
 
       // ------------------------------
-      
+
       // move to nutZ+x cuz no tighten in this moment
       var torqueSpindleZPos = (nutZ+0.2);
       cmd += "G1 Z" + torqueSpindleZPos + "\n"; 
+
+      // BACKWARD CATCHING ------------
+      // move first to the opposite direction 
+      // to catch collet for sure
+      if(screw && this.carousel.catchDegrees){
+         // backwards ~15°
+         var theta1   = holder.deg;
+         var theta2   = holder.deg - this.carousel.catchDegrees;
+         cmd += this.arc('G2', theta1, theta2, holder);
+         // forwards ~15°
+         cmd += this.arc('G3', theta2, theta1, holder);
+      }
+      // -------------------------------
       
       // move an torqueDegrees(°) arc CW
       var theta1   = holder.deg;
@@ -612,7 +627,7 @@ var myXTCMacro = {
 
       // ------------------------------
 
-      // move an ~90° arc CCW, back to original position
+      // move an ~50° arc CCW, back to original position
       theta1   = holder.deg + this.carousel.torqueDegrees;
       if(! screw)
           theta1   = holder.deg - this.carousel.torqueDegrees;
@@ -730,7 +745,7 @@ var myXTCMacro = {
       console.log('ATC called: ', 'atc_screw');
       var holder = this.atcMillHolder[ (this.toolnumber -1)];
       
-      // tighten process (TODO: use level)
+      // tighten process
       this.send("fwd "+ holder.tourque+" "+ holder.time, this.serialPortXTC);
 
       // set tool in use

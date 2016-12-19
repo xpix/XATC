@@ -315,6 +315,7 @@ void spindle_pwm(bool active){
    }else{
       if(speedTimer){
          timer.stop(speedTimer);
+         speedTimer = 0;
          md.setSpeed(0);
       }
    }
