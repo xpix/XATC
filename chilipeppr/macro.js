@@ -782,7 +782,7 @@ var myXTCMacro = {
             that.probed = true;
             // that.send("pwm\n", this.serialPortXTC); // read tinyg pwm spindle speed and set spindle
             chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
-            this.startSpindle(400); // TODO: set spindle
+            that.startSpindle(400); // TODO: set spindle
          });
       this.events.push({ x:0,  y:0, art:'twoaxis',
          event: startDeBlocker,
