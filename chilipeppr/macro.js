@@ -780,7 +780,7 @@ var myXTCMacro = {
             that.send("G10 L2 P1 Z" + (that.axis.mz - (that.touchprobe.secure_height + that.touchprobe.thick)) + "\n");        // set G54/Z-axis to Zero
             that.servo( that.carousel.servo.unblock );
             that.probed = true;
-            that.send("pwm", this.serialPortXTC); // read tinyg pwm spindle speed and set spindle
+            that.send("pwm\n", this.serialPortXTC); // read tinyg pwm spindle speed and set spindle
             chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
          });
       this.events.push({ x:0,  y:0, art:'twoaxis',
