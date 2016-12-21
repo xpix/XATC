@@ -165,9 +165,10 @@ var myXTCMacro = {
    onBeforeRender: function(data){
       console.log('ATC onBeforeRender:', data);
       // drawHolders again after gcode load
+      var that = this;
       setTimeout(function(){
-         this.toolsDatabase();
-         this.displayTools(0, 0);
+         that.toolsDatabase();
+         that.displayTools(0, 0);
       }, 1000);
    },
    onStateChanged: function(state){
