@@ -398,7 +398,7 @@ var myXTCMacro = {
       });
 
       // move to XY holder center ...
-      cmd += "G0 Z" + startSpindleSlowZPos + "\n";
+      cmd += "G0 Z" + startSpindleSlowZPos + " F" + atcparams.feedRate + "\n";
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
       cmd += "G4 P0.5\n"; // wait for start spindle slow
 
