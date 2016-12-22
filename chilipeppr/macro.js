@@ -53,6 +53,7 @@ var myXTCMacro = {
    serialPortXTC:    "/dev/ttyUSB2",   // Spindle DC Controler
    atcParameters: {
          slow:          30,   // value for minimum rpm
+         fast:         400,   // value for maximum rpm
          safetyHeight:  40,   // safety height
          feedRate:      300,  // Feedrate to move to screw position
          nutZ:          -5,   // safety deep position of collet in nut
@@ -779,10 +780,14 @@ var myXTCMacro = {
          .done( function(){
             that.send("G10 L2 P1 Z" + (that.axis.mz - (that.touchprobe.secure_height + that.touchprobe.thick)) + "\n");        // set G54/Z-axis to Zero
             that.servo( that.carousel.servo.unblock );
+            setTimeout(function(){
+               // Spindle deblock need some time and after 
+               // this start the spindle max rotation
+               that.startSpindle(that.atcParameters.fast);
+            }, 150);
             that.probed = true;
             // that.send("pwm\n", this.serialPortXTC); // read tinyg pwm spindle speed and set spindle
             chilipeppr.publish("/com-chilipeppr-widget-gcode/pause", null);
-            that.startSpindle(400); // TODO: set spindle
          });
       this.events.push({ x:0,  y:0, art:'twoaxis',
          event: startDeBlocker,
