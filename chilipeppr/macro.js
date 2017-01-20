@@ -93,6 +93,26 @@ var myXTCMacro = {
       secure_height: 2, // move to this z-height after probing
    },
    atcMillHolder: [
+      // Data for XATC 0.3 with 12 Slots 
+      // Center Position holder, catch height, tighten val, tighten ms,    deg
+      // --------------|--------------|-----------|-------------|---------|------
+      {posX :   60,     posY :  0,     posZ: 5,    tourque: 400, time: 500, deg: 360},  // 1. endmill holder
+      {posX :   51.96,  posY :-30,     posZ: 5,    tourque: 400, time: 500, deg: 360},  // 2. endmill holder
+      {posX :   30,     posY :-51.96,  posZ: 5,    tourque: 400, time: 500, deg: 360},  // 3. endmill holder
+      {posX :   0,      posY :-60,     posZ: 5,    tourque: 400, time: 500, deg: 360},  // 4. endmill holder
+
+      {posX :   -30,    posY :-51.96,  posZ: 5,    tourque: 400, time: 500, deg: 360},  // 5. endmill holder
+      {posX :-51.96,    posY :-30,     posZ: 5,    tourque: 400, time: 500, deg: 360},  // 6. endmill holder
+      {posX :   -60,    posY : 0,      posZ: 5,    tourque: 400, time: 500, deg: 360},  // 7. endmill holder
+
+      {posX :-51.96,    posY : 30,     posZ: 5,    tourque: 400, time: 500, deg: 360},  // 8. endmill holder
+      {posX :   -30,    posY :51.96,   posZ: 5,    tourque: 400, time: 500, deg: 360},  // 9. endmill holder
+      {posX :     0,    posY : 60,     posZ: 5,    tourque: 400, time: 500, deg: 360},  //10. endmill holder
+
+      {posX :     0,    posY : 60,     posZ: 5,    tourque: 400, time: 500, deg: 360},  //11. endmill holder
+      {posX :    30,    posY :51.96,   posZ: 5,    tourque: 400, time: 500, deg: 360},  //12. endmill holder
+
+      /*
       // Data for XATC 0.2 without(!) Gator Grips 
       // Center Position holder, catch height, tighten val, tighten ms,    deg
       // ---------------|-------------|-------------|-------------|---------|------
@@ -100,7 +120,7 @@ var myXTCMacro = {
       {posX :       0,  posY : -53.50, posZ: 5,   tourque: 400, time: 500, deg: 270},  // 2, endmill holder
       {posX :  -53.50,  posY :  0,     posZ: 5,   tourque: 400, time: 500, deg: 180},  // 3. endmill holder
       {posX :       0,  posY :  53.50, posZ: 5,   tourque: 400, time: 500, deg: 90},   // 4. endmill holder
-
+      */
 
       /* Data for XATC 0.1 with Gator Grips
       // Center Position holder, catch height, tighten val, tighten ms,    deg
