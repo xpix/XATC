@@ -423,6 +423,28 @@ var myXTCMacro = {
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
       cmd += "G4 P0.5\n"; // wait for start spindle slow
 
+      // move to holder Z pre-position height ...
+      cmd += "G0 Z" + holder.posZ + "\n";
+
+      // Prepare event stopSpindle -------------------------------------------
+      var stopSpindle= $.Deferred();
+      var stopSpindleZPos = holder.posZ-5;
+      var that = this;
+      $.when( stopSpindle )
+         .done( function(){
+               that.send('fwd 1', this.serialPortXTC)
+         } );
+
+      // register the event for updateAxesFromStatus, 
+      this.events.push({ x:holder.posX,  y:holder.posY,  z:stopSpindleZPos,
+         event: jitterSpindle,
+         comment: 'Jitter spindle to catch collet nut.',
+      });
+
+      // add stop 
+      cmd += "G1 Z" + stopSpindleZPos + " F" + atcparams.feedRate + "\n";
+      cmd += "G4 P1\n"; // wait some second's for jitter event
+
 
       // Prepare event jitterSpindle -------------------------------------------
       var jitterSpindle= $.Deferred();
@@ -437,8 +459,6 @@ var myXTCMacro = {
          comment: 'Jitter spindle to catch collet nut.',
       });
 
-      // move to holder Z pre-position height ...
-      cmd += "G0 Z" + holder.posZ + "\n";
       // add jitter 
       cmd += "G1 Z" + jitterSpindleZPos + " F" + atcparams.feedRate + "\n";
       cmd += "G4 P1\n"; // wait some second's for jitter event
