@@ -431,9 +431,7 @@ var myXTCMacro = {
       var stopSpindleZPos = holder.posZ-5;
       var that = this;
       $.when( stopSpindle )
-         .done( function(){
-               that.send('fwd 1', this.serialPortXTC)
-         } );
+         .done( this.stopSpindle.bind(this, art) );
 
       // register the event for updateAxesFromStatus, 
       this.events.push({ x:holder.posX,  y:holder.posY,  z:stopSpindleZPos,
