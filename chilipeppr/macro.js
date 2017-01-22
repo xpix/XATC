@@ -773,7 +773,7 @@ var myXTCMacro = {
       var touchp = this.touchprobe;
       if(touchp.enabled == false)
          return;
-      this.servo(this.touchprobe.servo);  // touch the spindle shaft for probing
+
       var g = "(Touch probe movement)\n";
       g += "G54 G17 G21\n";            // init movement
       /*
