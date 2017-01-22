@@ -780,7 +780,7 @@ var myXTCMacro = {
          use calculate offset coordinates for touch point
          analyze bbox and use the lower left/right/bottom/top corner
       */
-      g += "G0 X"+ this.touchprobe.position.x +" Y" + this.touchprobe.position.y +"\n";     // move to corner of workpiece minus offset
+      g += "G0 X"+ touchp.position.x +" Y" + touchp.position.y +"\n";     // move to corner of workpiece minus offset
       if(this.probed){
             g += "G0 Z5\n";       // move fast to second touchprobe
       }
@@ -791,10 +791,22 @@ var myXTCMacro = {
       this.send(g);
 
       // Events ----------------------------
-      
-      // block spindle via servo 
-      // we "shake" spindle for a short time to have a perfect "catched" wrench
       var that = this;
+
+      this.servo(this.touchprobe.servo);  // touch the spindle shaft for probing
+      var startBlocker = $.Deferred();
+      $.when( startBlocker )
+         .done( function(){
+            that.servo( that.carousel.servo.block );
+         });
+      this.events.push({ x:touchp.position.x, y:touchp.position.y, art:'twoaxis',
+         event: startBlocker,
+         comment: 'Move servo to touch spindle shaft.',
+      });
+
+      
+      // deblock spindle via servo 
+      // start the job and unpause the process
       var startDeBlocker = $.Deferred();
       $.when( startDeBlocker )
          .done( function(){
