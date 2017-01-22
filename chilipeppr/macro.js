@@ -438,7 +438,7 @@ var myXTCMacro = {
       // register the event for updateAxesFromStatus, 
       this.events.push({ x:holder.posX,  y:holder.posY,  z:stopSpindleZPos,
          event: jitterSpindle,
-         comment: 'Jitter spindle to catch collet nut.',
+         comment: 'Stop spindle to catch collet nut.',
       });
 
       // add stop 
