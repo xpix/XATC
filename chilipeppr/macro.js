@@ -419,7 +419,7 @@ var myXTCMacro = {
       });
 
       // move to XY holder center ...
-      cmd += "G0 Z" + startSpindleSlowZPos + " F" + atcparams.feedRate + "\n";
+      cmd += "G0 Z" + startSpindleSlowZPos + "\n";
       cmd += "G0 X" + holder.posX + " Y" + holder.posY + "\n"; 
       cmd += "G4 P0.5\n"; // wait for start spindle slow
 
@@ -440,7 +440,7 @@ var myXTCMacro = {
       // move to holder Z pre-position height ...
       cmd += "G0 Z" + holder.posZ + "\n";
       // add jitter 
-      cmd += "G1 Z" + jitterSpindleZPos + "\n";
+      cmd += "G1 Z" + jitterSpindleZPos + " F" + atcparams.feedRate + "\n";
       cmd += "G4 P1\n"; // wait some second's for jitter event
 
 
