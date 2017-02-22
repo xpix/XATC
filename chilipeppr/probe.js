@@ -32,7 +32,7 @@ var myWatchProbe = {
 
          this.intvl = setInterval(this.unpauseGcode.bind(this), 200);
       }
-	},
+   },
    updateAxesFromStatus: function (axis) {
       // machine ccordinate for Z-Axis for touch probe
       if (axis.mpo !== undefined && 'z' in axis.mpo && axis.mpo.z !== null) {
