@@ -9,7 +9,7 @@ Here i try to describe all steps how you can build your own XATC.
 Project Links
 ------------
 * Weekly messages on [g+](https://plus.google.com/collection/QX47gB)
-* Video sessions on [youtube](https://www.youtube.com/playlist?list=PLYPTUTcLMTK7m0cOoOKlDnuhGV8ONrgo)
+* Video sessions on [youtube](https://www.youtube.com/playlist?list=PLYPTUTcLMTK7m0cOoOKlDnuhGV8ONrgo_)
 * Web Video log on [blogspot](http://xpixer.blogspot.com/)
 
 Dependencies
